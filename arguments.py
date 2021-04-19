@@ -37,7 +37,7 @@ def param_loader():
     )
     parser.add_argument(
         "--model", type=str,
-        choices=['simsiam', 'byol'],
+        choices=['simsiam', 'byol', 'barlow_twins'],
         help="Self-Supervised model"
     )
 
@@ -60,6 +60,8 @@ def select_model(model_name: str, stage: str):
             from models.simsiam import SimSiamModel as LightningModule
         elif model_name == 'byol':
             from models.byol import BYOLModel as LightningModule
+        elif model_name == 'barlow_twins':
+            from models.barlow_twins import BarlowTwins as LightningModule
     elif stage == 'test':
         from models.linear_eval import LinearEvalModel as LightningModule
 
