@@ -1,0 +1,11 @@
+base: &base
+  basic:
+    warm_up_epochs: 10
+  model: &model
+    base_lr: 1e-3
+    weight_decay: 5e-4
+    # eff_batch_size is adaptive in get_config()
+  trainer:
+    max_epochs: 80
+    distributed_backend: 'ddp'
+    check_val_every_n_epoch: 8
