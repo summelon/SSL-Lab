@@ -86,6 +86,9 @@ def _prepare_data_module(args):
     # Prepare data module
     if dataset_name == 'cifar10':
         from pl_bolts.datamodules import CIFAR10DataModule
+        from pl_bolts.transforms.dataset_normalizations import (
+            cifar10_normalization
+        )
         input_size = 32
         data_module = CIFAR10DataModule(
             data_dir=args['base_dir'],
@@ -93,6 +96,19 @@ def _prepare_data_module(args):
             batch_size=512,
             shuffle=True,
             pin_memory=True,
+            val_split=5000,
+        )
+        data_module.train_transforms = SimCLRTrainDataTransform(
+            input_size,
+            gaussian_blur=False,
+            jitter_strength=0.5,
+            normalize=cifar10_normalization(),
+        )
+        data_module.val_transforms = SimCLREvalDataTransform(
+            input_size,
+            gaussian_blur=False,
+            jitter_strength=0.5,
+            normalize=cifar10_normalization(),
         )
     else:
         input_size = 224
@@ -102,8 +118,8 @@ def _prepare_data_module(args):
             batch_size=device_batch_size,
             num_workers=4*args['gpu'],
         )
-    data_module.train_transforms = SimCLRTrainDataTransform(input_size)
-    data_module.val_transforms = SimCLREvalDataTransform(input_size)
+        data_module.train_transforms = SimCLRTrainDataTransform(input_size)
+        data_module.val_transforms = SimCLREvalDataTransform(input_size)
     data_module.setup()
 
     return data_module
