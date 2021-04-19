@@ -1,7 +1,6 @@
 import torch
 from copy import deepcopy
 from pl_bolts.callbacks.byol_updates import BYOLMAWeightUpdate
-from pl_bolts.optimizers.lars_scheduling import LARSWrapper
 
 from .simsiam import SimSiamModel
 
@@ -73,7 +72,6 @@ class BYOLModel(SimSiamModel):
             lr=self.hparams.base_lr,
             weight_decay=self.hparams.weight_decay
         )
-        optimizer = LARSWrapper(optimizer)
         scheduler = {
             'scheduler': torch.optim.lr_scheduler.LambdaLR(
                 optimizer, lr_lambda=self._custom_scheduler_fn()),
