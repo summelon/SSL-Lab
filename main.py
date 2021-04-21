@@ -77,9 +77,9 @@ def _prepare_data_module(args):
         SimCLREvalDataTransform,
     )
     dataset_name = args['dataset']
-    # Device bs for real acceptable batch size
+    # Device bs for real acceptable batch size 1080Ti & TiTan-xp
     if args['backbone'] == 'resnet18':
-        device_batch_size = 128
+        device_batch_size = 128 if args['model'] != 'barlow_twins' else 64
     elif args['backbone'] == 'resnet50':
         device_batch_size = 32
 

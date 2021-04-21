@@ -2,29 +2,46 @@ base: &base
   basic:
     warm_up_epochs: 10
   model: &model
-    base_lr: 1e-3
-    weight_decay: 5e-4
-    momentum: 0.9
     # bs = 256/512 performs best in paper(ResNet50)
     eff_batch_size: 512
+    maxpool1: True
+    first_conv: True
+    momentum: 0.9
+
+    # TODO Check BYOL paper, add lars
+    # Adam && bolts default
+    optimizer: adam
+    base_lr: 1e-3
+    weight_decay: 1.5e-6
+    ## SGD
+    # optimizer: sgd
+    # base_lr: 0.05
+    # weight_decay: 1e-4
+    # LARS
+    # base_lr: 0.2
+
+    ## Cifar
+    # optimizer: sgd
+    # base_lr: 0.03
+    # weight_decay: 5e-4
+    # eff_batch_size: 512
+
   trainer:
     max_epochs: 800
     distributed_backend: 'ddp'
 
-resnet18:
+# Complete exactly as BYOL paper & bolts
+resnet18: &resnet18
   <<: *base
   model:
     <<: *model
     mlp_config:
       proj_hidden_dim: 8192
+      pred_hidden_dim: 0
       out_dim: 8192
-      num_proj_layers: 3
+      num_proj_mlp_layer: 3
+      proj_last_bn: False
+      using_predictor: False
 
 resnet50:
-  <<: *base
-  model:
-    <<: *model
-    mlp_config:
-      proj_hidden_dim: 8192
-      out_dim: 8192
-      num_proj_layers: 3
+  <<: *resnet18
