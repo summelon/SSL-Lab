@@ -24,7 +24,7 @@ class CheckCollapse(pl.callbacks.Callback):
 
         # the level of collapse is large if the standard deviation of the l2
         # normalized output is much smaller than 1 / sqrt(dim)
-        out_dim = pl_module.online_network.num_ftrs
+        out_dim = pl_module.online_network.num_features
         collapse_level = \
             max(0., 1 - math.sqrt(out_dim) * self.avg_output_std)
         # Log to tensorboard

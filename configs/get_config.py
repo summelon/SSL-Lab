@@ -9,14 +9,14 @@ def get_config(
         yaml_file_path: str,
         data_module: LightningDataModule,
         gpu_num: int = 4,
-        arch: str = 'resnet18',
+        backbone: str = 'resnet18',
 ):
     # Read model arguments
     yaml_loader = _get_yaml_loader()
     with open(yaml_file_path, 'r') as yaml_file:
         args = yaml.load(yaml_file, Loader=yaml_loader)
-    # Select specific arch args
-    args = args['base'] if args.get(arch) is None else args[arch]
+    # Select specific backbone args
+    args = args['base'] if args.get(backbone) is None else args[backbone]
 
     # Batch size & update interval
     device_batch_size = data_module.batch_size
@@ -41,7 +41,7 @@ def get_config(
 
     # Configs
     model_config = dict(
-        arch=arch,
+        backbone=backbone,
         **args['model'],
     )
     trainer_config = dict(
@@ -83,7 +83,7 @@ def main():
         yaml_file_path=yaml_file_path,
         data_module=data_module,
         gpu_num=4,
-        arch='resnet18',
+        backbone='resnet18',
     )
     print(config)
 

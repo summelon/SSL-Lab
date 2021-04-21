@@ -57,12 +57,12 @@ def select_model(model_name: str, stage: str):
     # TODO add return notion
     if stage == 'fit':
         if model_name == 'simsiam':
-            from models.simsiam import SimSiamModel as LightningModule
+            from arch.modules.simsiam import SimSiamModel as LightningModule
         elif model_name == 'byol':
-            from models.byol import BYOLModel as LightningModule
+            from arch.modules.byol import BYOLModel as LightningModule
         elif model_name == 'barlow_twins':
-            from models.barlow_twins import BarlowTwins as LightningModule
+            from arch.modules.barlow_twins import BarlowTwins as LightningModule
     elif stage == 'test':
-        from models.linear_eval import LinearEvalModel as LightningModule
+        from arch.modules.linear_eval import LinearEvalModel as LightningModule
 
     return LightningModule

@@ -1,36 +1,29 @@
 import math
 import torch
 import lightly
-import torchvision
 import pytorch_lightning as pl
+
+from ..models.simsiam_arm import SiameseArm
 
 
 class SimSiamModel(pl.LightningModule):
     def __init__(
-            self,
-            base_lr: float,
-            weight_decay: float,
-            momentum: float,
-            eff_batch_size: int,
-            warm_up_steps: int,
-            max_steps: int,
-            num_classes: int,
-            # Model specific args:
-            mlp_config: dict,
-            arch: str = 'resnet18',
+        self,
+        base_lr: float,
+        weight_decay: float,
+        momentum: float,
+        eff_batch_size: int,
+        warm_up_steps: int,
+        max_steps: int,
+        num_classes: int,
+        maxpool1: bool,
+        first_conv: bool,
+        mlp_config: dict,
+        backbone: str = "resnet18",
+        optimizer: str = "adam",
     ):
         super().__init__()
-        self.hparams = dict(
-            base_lr=base_lr,
-            weight_decay=weight_decay,
-            momentum=momentum,
-            arch=arch,
-            warm_up_steps=warm_up_steps,
-            max_steps=max_steps,
-            eff_batch_size=eff_batch_size,
-            num_classes=num_classes,
-            mlp_config=mlp_config,
-        )
+        self.save_hyperparameters()
         self.online_network = self._prepare_model()
         self.criterion = lightly.loss.SymNegCosineSimilarityLoss()
         self.outputs = None
@@ -50,20 +43,26 @@ class SimSiamModel(pl.LightningModule):
         # TODO: modify to more clean method
         self.outputs = y0[0]
         self.log(
-            'repr_loss', loss, prog_bar=True, logger=True,
-            on_step=True, on_epoch=False, sync_dist=True
+            "repr_loss", loss, prog_bar=True, logger=True,
+            on_step=True, on_epoch=False, sync_dist=True,
         )
         return loss
 
     def configure_optimizers(self):
         # scaled_lr = self.hparams.base_lr * self.hparams.eff_batch_size / 256
-        # optimizer = torch.optim.SGD(
-        optimizer = torch.optim.Adam(
-            self.online_network.parameters(),
-            # momentum=self.hparams.momentum,
+        opt_args = dict(
+            params=self.online_network.parameters(),
             lr=self.hparams.base_lr,
-            weight_decay=self.hparams.weight_decay
+            weight_decay=self.hparams.weight_decay,
         )
+        if self.hparams.optimizer == "adam":
+            optimizer = torch.optim.Adam(**opt_args)
+        elif self.hparams.optimizer == "sgd":
+            optimizer = torch.optim.SGD(
+                momentum=self.hparams.momentum, **opt_args)
+        else:
+            raise NotImplementedError("[ Error ] Optimizer is not implemented")
+
         scheduler = {
             'scheduler': torch.optim.lr_scheduler.LambdaLR(
                 optimizer, lr_lambda=self._custom_scheduler_fn()),
@@ -86,17 +85,15 @@ class SimSiamModel(pl.LightningModule):
         return _cosine_decay_scheduler
 
     def _prepare_model(self):
-        from pl_bolts.utils.semi_supervised import Identity
-        resnet = torchvision.models.__dict__[self.hparams.arch]()
-        num_features = resnet.fc.in_features
-        resnet.fc = Identity()
-        online_network = lightly.models.SimSiam(
-            resnet,
-            num_ftrs=num_features,
-            proj_hidden_dim=self.hparams.mlp_config['proj_hidden_dim'],
-            pred_hidden_dim=self.hparams.mlp_config['pred_hidden_dim'],
-            out_dim=self.hparams.mlp_config['out_dim'],
-            # Only the layers number of projection module is different
-            num_mlp_layers=self.hparams.mlp_config['num_proj_layers'],
+        online_network = SiameseArm(
+            backbone=self.hparams.backbone,
+            first_conv=self.hparams.first_conv,
+            maxpool1=self.hparams.maxpool1,
+            proj_hidden_dim=self.hparams.mlp_config["proj_hidden_dim"],
+            pred_hidden_dim=self.hparams.mlp_config["pred_hidden_dim"],
+            out_dim=self.hparams.mlp_config["out_dim"],
+            num_proj_mlp_layer=self.hparams.mlp_config["num_proj_mlp_layer"],
+            mlp_last_bn=self.hparams.mlp_config["mlp_last_bn"],
+            using_predictor=self.hparams.mlp_config["using_predictor"],
         )
         return online_network

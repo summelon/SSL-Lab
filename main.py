@@ -34,7 +34,7 @@ def main(args):
         yaml_file_path=yaml_file_path,
         data_module=data_module,
         gpu_num=args['gpu'],
-        arch=args['backbone'],
+        backbone=args['backbone'],
     )
     # Prepare model
     model = LightningModule(**config['model_config'])
@@ -45,7 +45,7 @@ def main(args):
     if args['stage'] == 'fit':
         lr_monitor = pl.callbacks.LearningRateMonitor(logging_interval='step')
         online_linear = custom_callbacks.OnlineLinear(
-            num_features=model.online_network.num_ftrs,
+            num_features=model.online_network.num_features,
             num_classes=model.hparams.num_classes,
             dataset=args['dataset']
         )
@@ -90,10 +90,12 @@ def _prepare_data_module(args):
             cifar10_normalization
         )
         input_size = 32
+        args["model_config"]["maxpool1"] = False
+        args["model_config"]["first_conv"] = False
         data_module = CIFAR10DataModule(
             data_dir=args['base_dir'],
             num_workers=16,
-            batch_size=512,
+            batch_size=256,
             shuffle=True,
             pin_memory=True,
             val_split=5000,

@@ -2,11 +2,14 @@ base: &base
   basic:
     warm_up_epochs: 10
   model: &model
+    optimizer: adam
     base_lr: 1e-3
     weight_decay: 1.5e-6
     momentum: 0.9
     # bs = 256/512 performs best in paper(ResNet50)
     eff_batch_size: 512
+    maxpool1: True
+    first_conv: True
   trainer:
     max_epochs: 1000
     distributed_backend: 'ddp'
@@ -20,10 +23,9 @@ resnet18:
       proj_hidden_dim: 1024
       pred_hidden_dim: 1024
       out_dim: 128
-      # proj_hidden_dim: 512
-      # pred_hidden_dim: 512
-      # out_dim: 64
-      num_proj_layers: 2
+      num_proj_mlp_layer: 2
+      mlp_last_bn: False
+      using_predictor: True
 
 resnet50:
   <<: *base
@@ -33,7 +35,9 @@ resnet50:
       proj_hidden_dim: 2048
       pred_hidden_dim: 2048
       out_dim: 128
-      num_proj_layers: 2
+      num_proj_mlp_layer: 2
+      mlp_last_bn: False
+      using_predictor: True
 
 # ---- Lightly & original paper ----
 # resnet18:
