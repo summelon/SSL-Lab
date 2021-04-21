@@ -93,7 +93,7 @@ class SimSiamModel(pl.LightningModule):
             pred_hidden_dim=self.hparams.mlp_config["pred_hidden_dim"],
             out_dim=self.hparams.mlp_config["out_dim"],
             num_proj_mlp_layer=self.hparams.mlp_config["num_proj_mlp_layer"],
-            mlp_last_bn=self.hparams.mlp_config["mlp_last_bn"],
+            proj_last_bn=self.hparams.mlp_config["proj_last_bn"],
             using_predictor=self.hparams.mlp_config["using_predictor"],
         )
         return online_network

@@ -72,7 +72,7 @@ class SiameseArm(nn.Module):
         pred_hidden_dim: int,
         out_dim: int,
         num_proj_mlp_layer: int = 2,
-        mlp_last_bn: bool = False,
+        proj_last_bn: bool = False,
         using_predictor: str = True,
     ) -> None:
         super().__init__()
@@ -90,7 +90,7 @@ class SiameseArm(nn.Module):
             input_dim=self.num_features,
             hidden_dim=proj_hidden_dim,
             output_dim=out_dim,
-            last_bn=mlp_last_bn,
+            last_bn=proj_last_bn,
             num_layers=num_proj_mlp_layer,
         )
         if self.using_predictor:
@@ -99,7 +99,7 @@ class SiameseArm(nn.Module):
                 input_dim=out_dim,
                 hidden_dim=pred_hidden_dim,
                 output_dim=out_dim,
-                last_bn=mlp_last_bn,
+                last_bn=False,
                 num_layers=2,
             )
         return
