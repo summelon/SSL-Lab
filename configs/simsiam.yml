@@ -7,25 +7,26 @@ base: &base
     maxpool1: True
     first_conv: True
     momentum: 0.9
-
+    # ----------------------
     # # Adam && bolts default
     # optimizer: adam
     # base_lr: 1e-3
     # weight_decay: 1e-6
-    # # SGD
-    # optimizer: sgd
-    # base_lr: 0.05
-    # weight_decay: 1e-4
-
-    # Cifar
+    # ----------------------
+    # SGD orig_paper
+    optimizer: sgd
+    base_lr: 0.05
+    weight_decay: 1e-4
+  trainer:
+    max_epochs: 800
+    distributed_backend: 'ddp'
+  cifar:
+    maxpool1: False
+    first_conv: False
     optimizer: sgd
     base_lr: 0.03
     weight_decay: 5e-4
     eff_batch_size: 512
-
-  trainer:
-    max_epochs: 800
-    distributed_backend: 'ddp'
 
 # # ---- Lightning bolts ----
 # resnet18:

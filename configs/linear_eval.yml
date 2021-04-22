@@ -4,15 +4,22 @@ base: &base
   model: &model
     # eff_batch_size is adaptive in get_config()
     momentum: 0.9
-
+    # ----------------
     # Adam && bolts default
+    # TODO Check sgd parameters in SimSiam paper
     optimizer: adam
     base_lr: 1e-3
     weight_decay: 1e-6
+    # ----------------
     # # SGD
     # optimizer: sgd
     # base_lr: 0.05
     # weight_decay: 1e-4
+  cifar:
+    optimizer: sgd
+    base_lr: 0.03
+    weight_decay: 5e-4
+    eff_batch_size: 512
 
   trainer:
     max_epochs: 80

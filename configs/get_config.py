@@ -35,8 +35,7 @@ def get_config(
     if data_module.name == 'cifar10':
         train_samples = data_module.num_samples
         args['model']['num_classes'] = data_module.num_classes
-        args["model"]["maxpool1"] = False
-        args["model"]["first_conv"] = False
+        args["model"].update(args["cifar"])
     else:
         train_samples = len(data_module.train_set)
         args['model']['num_classes'] = len(data_module.train_set.classes)
