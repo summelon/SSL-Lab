@@ -1,3 +1,5 @@
+from typing import Optional
+
 import re
 import yaml
 from pytorch_lightning import (
@@ -6,10 +8,11 @@ from pytorch_lightning import (
 
 
 def get_config(
-        yaml_file_path: str,
-        data_module: LightningDataModule,
-        gpu_num: int = 4,
-        backbone: str = 'resnet18',
+    yaml_file_path: str,
+    data_module: LightningDataModule,
+    gpu_num: int = 4,
+    # TODO: parameter `backbone` maybe None in Linear_eval
+    backbone: Optional[str] = None,
 ):
     # Read model arguments
     yaml_loader = _get_yaml_loader()
@@ -21,6 +24,7 @@ def get_config(
     # Batch size & update interval
     device_batch_size = data_module.batch_size
     if 'linear_eval.yml' in yaml_file_path:
+        # TODO Modify eff_batch_size to full-mem-usage fasion
         args['model']['eff_batch_size'] = device_batch_size * gpu_num
     args['trainer']['accumulate_grad_batches'] = \
         int(args['model']['eff_batch_size'] / device_batch_size / gpu_num)
@@ -31,6 +35,8 @@ def get_config(
     if data_module.name == 'cifar10':
         train_samples = data_module.num_samples
         args['model']['num_classes'] = data_module.num_classes
+        args["model"]["maxpool1"] = False
+        args["model"]["first_conv"] = False
     else:
         train_samples = len(data_module.train_set)
         args['model']['num_classes'] = len(data_module.train_set.classes)

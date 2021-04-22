@@ -36,11 +36,11 @@ def main(args):
         gpu_num=args['gpu'],
         backbone=args['backbone'],
     )
-    # Prepare model
-    model = LightningModule(**config['model_config'])
     # Use pretrain weights
     if args['stage'] == 'test':
-        model.load_state_dict(args['pretrained'])
+        config["model_config"]["ckpt_path"] = args["pretrained"]
+    # Prepare model
+    model = LightningModule(**config['model_config'])
     # Callbacks
     if args['stage'] == 'fit':
         lr_monitor = pl.callbacks.LearningRateMonitor(logging_interval='step')
@@ -90,12 +90,10 @@ def _prepare_data_module(args):
             cifar10_normalization
         )
         input_size = 32
-        args["model_config"]["maxpool1"] = False
-        args["model_config"]["first_conv"] = False
         data_module = CIFAR10DataModule(
             data_dir=args['base_dir'],
-            num_workers=16,
-            batch_size=256,
+            num_workers=8,
+            batch_size=512,
             shuffle=True,
             pin_memory=True,
             val_split=5000,

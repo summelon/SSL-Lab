@@ -49,10 +49,10 @@ class SimSiamModel(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        # scaled_lr = self.hparams.base_lr * self.hparams.eff_batch_size / 256
+        scaled_lr = self.hparams.base_lr * self.hparams.eff_batch_size / 256
         opt_args = dict(
             params=self.online_network.parameters(),
-            lr=self.hparams.base_lr,
+            lr=scaled_lr,
             weight_decay=self.hparams.weight_decay,
         )
         if self.hparams.optimizer == "adam":

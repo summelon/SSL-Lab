@@ -2,9 +2,18 @@ base: &base
   basic:
     warm_up_epochs: 10
   model: &model
-    base_lr: 1e-3
-    weight_decay: 5e-4
     # eff_batch_size is adaptive in get_config()
+    momentum: 0.9
+
+    # Adam && bolts default
+    optimizer: adam
+    base_lr: 1e-3
+    weight_decay: 1e-6
+    # # SGD
+    # optimizer: sgd
+    # base_lr: 0.05
+    # weight_decay: 1e-4
+
   trainer:
     max_epochs: 80
     distributed_backend: 'ddp'
