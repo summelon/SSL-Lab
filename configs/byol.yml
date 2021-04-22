@@ -10,26 +10,26 @@ base: &base
 
     # TODO Check BYOL paper, add lars
     # Adam && bolts default
-    optimizer: adam
-    base_lr: 1e-3
-    weight_decay: 1.5e-6
-    ## SGD
+    # optimizer: adam
+    # base_lr: 1e-3
+    # weight_decay: 1.5e-6
+    # SGD: BYOL
     # optimizer: sgd
-    # base_lr: 0.05
-    # weight_decay: 1e-4
+    # base_lr: 0.4
+    # weight_decay: 1.5e-6
+    # SGD: SimSiam
+    optimizer: sgd
+    base_lr: 0.2
+    weight_decay: 1.5e-6
 
   trainer:
-    max_epochs: 800
+    max_epochs: 1000
     distributed_backend: 'ddp'
 
   # Cifar
-  # TODO This is SimSiam config, BYOL should be adjust
   cifar:
     maxpool1: False
     first_conv: False
-    optimizer: sgd
-    base_lr: 0.03
-    weight_decay: 5e-4
     eff_batch_size: 512
 
 # Complete exactly as BYOL paper & bolts

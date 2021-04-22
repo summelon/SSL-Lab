@@ -93,9 +93,10 @@ def _prepare_data_module(args):
         data_module = CIFAR10DataModule(
             data_dir=args['base_dir'],
             num_workers=8,
-            batch_size=512,
+            batch_size=128 if args["backbone"] == "resnet50" else 512,
             shuffle=True,
             pin_memory=True,
+            # TODO Check if fixed split
             val_split=5000,
         )
         data_module.train_transforms = SimCLRTrainDataTransform(
