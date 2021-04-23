@@ -14,6 +14,8 @@ def main(args):
     from configs.get_config import get_config
     from arguments import select_model
 
+    pl.seed_everything(args["seed"])
+
     tic = int(time.time())
     # Select specific SSL module
     LightningModule = select_model(args['model'], args['stage'])

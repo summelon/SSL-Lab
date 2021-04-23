@@ -10,6 +10,11 @@ def param_loader():
         description="SSL_Lab",
         formatter_class=RawTextHelpFormatter,
     )
+    # Deterministic
+    parser.add_argument(
+        "--seed", type=int, default=666,
+        help="Random seed number"
+    )
     # Train
     parser.add_argument(
         "--stage", type=str, required=True,
