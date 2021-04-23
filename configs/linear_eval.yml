@@ -7,21 +7,20 @@ base: &base
     # ----------------
     # Adam && bolts default
     # TODO Check sgd parameters in SimSiam paper
-    optimizer: adam
-    base_lr: 1e-3
-    weight_decay: 1e-6
+    # optimizer: adam
+    # base_lr: 1e-3
+    # weight_decay: 1e-6
     # ----------------
-    # # SGD
-    # optimizer: sgd
-    # base_lr: 0.05
-    # weight_decay: 1e-4
+    # SGD
+    optimizer: sgd
+    base_lr: 30
+    weight_decay: 0
   cifar:
     optimizer: sgd
-    base_lr: 0.03
-    weight_decay: 5e-4
-    eff_batch_size: 512
+    base_lr: 30
+    weight_decay: 0
 
   trainer:
-    max_epochs: 80
+    max_epochs: 90
     distributed_backend: 'ddp'
     check_val_every_n_epoch: 8
