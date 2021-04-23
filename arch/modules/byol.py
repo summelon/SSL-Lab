@@ -25,6 +25,8 @@ class BYOLModel(SimSiamModel):
         super().__init__(**self.hparams)
 
         self.target_network = deepcopy(self.online_network)
+        for param in self.target_network.parameters():
+            param.requires_grad = False
         self.criterion = torch.nn.CosineSimilarity()
         self.weight_callback = BYOLMAWeightUpdate()
 

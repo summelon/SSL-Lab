@@ -22,15 +22,7 @@ class BarlowTwins(SimSiamModel):
         self.save_hyperparameters()
         super().__init__(**self.hparams)
 
-        self.online_network = self._prepare_model()
         self.criterion = lightly.loss.BarlowTwinsLoss()
-        self.outputs = None
-
-    def forward(self, x):
-        # Input: x0, x1, return_features
-        # Output: ((projection, prediction), backbone_feature)
-        _, backbone_feature = self.online_network(x, return_features=True)
-        return backbone_feature
 
     def training_step(self, batch, batch_idx):
         # (x0, x1), _, _ = batch
