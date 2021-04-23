@@ -78,10 +78,6 @@ def _prepare_data_module(args):
     )
     dataset_name = args['dataset']
     # Device bs for real acceptable batch size 1080Ti & TiTan-xp
-    if args['backbone'] == 'resnet18':
-        device_batch_size = 128 if args['model'] != 'barlow_twins' else 64
-    elif args['backbone'] == 'resnet50':
-        device_batch_size = 32
 
     # Prepare data module
     if dataset_name == 'cifar10':
@@ -92,8 +88,10 @@ def _prepare_data_module(args):
         input_size = 32
         data_module = CIFAR10DataModule(
             data_dir=args['base_dir'],
-            num_workers=8,
-            batch_size=128 if args["backbone"] == "resnet50" else 512,
+            # num_workers=8,
+            # batch_size=128 if args["backbone"] == "resnet50" else 512,
+            num_workers=8*args['gpu'],
+            batch_size=args["device_bs"],
             shuffle=True,
             pin_memory=True,
             # TODO Check if fixed split
@@ -116,7 +114,7 @@ def _prepare_data_module(args):
         data_module = dlhelper.dataset.PLDataModule(
             dataset_name=dataset_name,
             base_dir=args['base_dir'],
-            batch_size=device_batch_size,
+            batch_size=args["device_bs"],
             num_workers=4*args['gpu'],
         )
         data_module.train_transforms = SimCLRTrainDataTransform(input_size)

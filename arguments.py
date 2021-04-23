@@ -1,9 +1,15 @@
 import os
+from inspect import cleandoc
 from argparse import ArgumentParser
+from argparse import RawTextHelpFormatter
+from pytorch_lightning import LightningModule
 
 
 def param_loader():
-    parser = ArgumentParser()
+    parser = ArgumentParser(
+        description="SSL_Lab",
+        formatter_class=RawTextHelpFormatter,
+    )
     # Train
     parser.add_argument(
         "--stage", type=str, required=True,
@@ -29,6 +35,26 @@ def param_loader():
         "--base_dir", type=str, default="/dev/shm",
         help="The base directory to where dataset is"
     )
+    parser.add_argument(
+        "--device_bs", type=int, required=True,
+        help=cleandoc(
+            '''
+            The batch size on each GPU:
+                Cifar10:
+                    ResNet18:
+                        normal module: 512
+                        BarlowTwins: 256
+                    ResNet50:
+                        normal module: 128
+                        BarlowTwins: 64
+                224 Dataset:
+                    ResNet18:
+                        normal module: 128
+                    ResNet50:
+                        normal module: 32
+            '''
+        )
+    )
     # Model
     parser.add_argument(
         "--backbone", type=str, default="resnet18",
@@ -53,8 +79,7 @@ def param_loader():
     return vars(args)
 
 
-def select_model(model_name: str, stage: str):
-    # TODO add return notion
+def select_model(model_name: str, stage: str) -> LightningModule:
     if stage == 'fit':
         if model_name == 'simsiam':
             from arch.modules.simsiam import (
