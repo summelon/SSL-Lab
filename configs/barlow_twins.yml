@@ -8,15 +8,16 @@ base: &base
     first_conv: True
     momentum: 0.9
 
-    # TODO Check BYOL paper, add lars
+    # TODO: add LARS & min lr for BT
     # Adam && bolts default
-    optimizer: adam
-    base_lr: 1e-3
+    # optimizer: adam
+    # base_lr: 1e-3
+    # weight_decay: 1.5e-6
+    # SGD
+    # NOTE 2048 -> 0.2 lr; 512 -> 0.05?
+    optimizer: sgd
+    base_lr: 0.2
     weight_decay: 1.5e-6
-    ## SGD
-    # optimizer: sgd
-    # base_lr: 0.05
-    # weight_decay: 1e-4
     # LARS
     # base_lr: 0.2
 
@@ -25,14 +26,13 @@ base: &base
     distributed_backend: 'ddp'
 
   # Cifar
-  # TODO This is SimSiam config, BarlowTwins should be adjust
+  # NOTE hyperparameters from lightly
   cifar:
     maxpool1: False
     first_conv: False
     optimizer: sgd
-    base_lr: 0.03
+    base_lr: 1e-3
     weight_decay: 5e-4
-    eff_batch_size: 512
 
 # Complete exactly as BYOL paper & bolts
 resnet18: &resnet18
