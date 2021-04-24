@@ -21,16 +21,6 @@ def get_config(
     # Select specific backbone args
     args = args['base'] if args.get(backbone) is None else args[backbone]
 
-    # Batch size & update interval
-    device_batch_size = data_module.batch_size
-    if 'linear_eval.yml' in yaml_file_path:
-        # TODO Modify eff_batch_size to full-mem-usage fasion
-        args['model']['eff_batch_size'] = device_batch_size * gpu_num
-    args['trainer']['accumulate_grad_batches'] = \
-        int(args['model']['eff_batch_size'] / device_batch_size / gpu_num)
-    if args['trainer']['accumulate_grad_batches'] < 1.0:
-        raise ValueError("[Error] Effective batch size is toow small!")
-
     # Dataset info
     if data_module.name == 'cifar10':
         train_samples = data_module.num_samples
@@ -39,10 +29,22 @@ def get_config(
     else:
         train_samples = len(data_module.train_set)
         args['model']['num_classes'] = len(data_module.train_set.classes)
+
+    # Batch size & update interval
+    if 'linear_eval.yml' in yaml_file_path:
+        # TODO Modify eff_batch_size to full-mem-usage fasion
+        args['model']['eff_batch_size'] = data_module.batch_size * gpu_num
+    args['trainer']['accumulate_grad_batches'] = \
+        int(args['model']['eff_batch_size'] / data_module.batch_size / gpu_num)
+    if args['trainer']['accumulate_grad_batches'] < 1.0:
+        raise ValueError("[Error] Effective batch size is too small!")
+
+    # Calculate steps
     args['model']['warm_up_steps'] = args['basic']['warm_up_epochs'] \
         * train_samples // args['model']['eff_batch_size']
     args['model']['max_steps'] = args['trainer']['max_epochs'] \
         * train_samples // args['model']['eff_batch_size']
+
 
     # Configs
     model_config = dict(
