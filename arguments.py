@@ -31,6 +31,10 @@ def param_loader():
         "--gpu", type=int, default=4,
         help="number of GPU"
     )
+    parser.add_argument(
+        "--log_postfix", type=str, default="",
+        help="Postfix append to the name of version"
+    )
     # Dataset
     parser.add_argument(
         "--dataset", type=str, required=True,
@@ -74,14 +78,25 @@ def param_loader():
 
     # Parse to dict
     args, _ = parser.parse_known_args()
+    args.version_name = _get_version_name(args)
 
+    return vars(args)
+
+
+def _get_version_name(args):
     if args.stage == 'test':
         if args.pretrained and os.path.isfile(args.pretrained):
             print(f"[ INFO ] Using weights from {args.pretrained}")
+            version_name = args.pretrained.split('/')[-3]
         else:
             raise ValueError("[ Error ] Wrong pretrained file path!")
+    else:
+        if args.log_postfix != "":
+            version_name = args.dataset + '_' + args.log_postfix
+        else:
+            version_name = args.dataset
 
-    return vars(args)
+    return version_name
 
 
 def select_model(model_name: str, stage: str) -> LightningModule:

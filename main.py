@@ -29,7 +29,7 @@ def main(args):
     tb_logger = pl.loggers.TensorBoardLogger(
         save_dir=os.path.join(os.getcwd(), 'log', args['model']),
         name=args['backbone'],
-        version=args['dataset'],
+        version=args["version_name"],
     )
     # Module-specifi config
     config = get_config(
