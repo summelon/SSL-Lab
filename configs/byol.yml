@@ -13,14 +13,14 @@ base: &base
     # optimizer: adam
     # base_lr: 1e-3
     # weight_decay: 1.5e-6
-    # SGD: BYOL
-    # optimizer: sgd
-    # base_lr: 0.4
-    # weight_decay: 1.5e-6
-    # SGD: SimSiam
-    optimizer: sgd
-    base_lr: 0.2
+    # LARS: BYOL
+    optimizer: lars
+    base_lr: 0.4
     weight_decay: 1.5e-6
+    # # SGD: SimSiam
+    # optimizer: sgd
+    # base_lr: 0.2
+    # weight_decay: 1.5e-6
 
   trainer:
     max_epochs: 1000

@@ -1,6 +1,7 @@
 import math
 import torch
 import pytorch_lightning as pl
+from pl_bolts.optimizers.lars import LARS
 
 
 class BaseModel(pl.LightningModule):
@@ -15,21 +16,12 @@ class BaseModel(pl.LightningModule):
         raise NotImplementedError(
             "[ Error ] `training_step` method not implemented!")
 
-    def configure_optimizers(self):
-        scaled_lr = self.hparams.base_lr * self.hparams.eff_batch_size / 256
-        opt_args = dict(
-            params=self.parameters(),
-            lr=scaled_lr,
-            weight_decay=self.hparams.weight_decay,
-        )
-        if self.hparams.optimizer == "adam":
-            optimizer = torch.optim.Adam(**opt_args)
-        elif self.hparams.optimizer == "sgd":
-            optimizer = torch.optim.SGD(
-                momentum=self.hparams.momentum, **opt_args)
-        else:
-            raise NotImplementedError("[ Error ] Optimizer is not implemented")
+    def _prepare_model(self):
+        raise NotImplementedError(
+            "[ Error ] `_prepare_model` method not implemented!")
 
+    def configure_optimizers(self):
+        optimizer = self._select_optimizer()
         scheduler = {
             'scheduler': torch.optim.lr_scheduler.LambdaLR(
                 optimizer, lr_lambda=self._custom_scheduler_fn()),
@@ -51,6 +43,65 @@ class BaseModel(pl.LightningModule):
             return lr_factor
         return _cosine_decay_scheduler
 
-    def _prepare_model(self):
-        raise NotImplementedError(
-            "[ Error ] `_prepare_model` method not implemented!")
+    def _exclude_from_wt_decay(
+        self,
+        named_params,
+        weight_decay,
+        skip_list=['bias', 'bn']
+    ):
+        params = []
+        excluded_params = []
+
+        for name, param in named_params:
+            if not param.requires_grad:
+                continue
+            elif any(layer_name in name for layer_name in skip_list):
+                excluded_params.append(param)
+            else:
+                params.append(param)
+
+        return [
+            {
+                'params': params,
+                'weight_decay': weight_decay
+            },
+            {
+                'params': excluded_params,
+                'weight_decay': 0.
+            },
+        ]
+
+    def _filter_params(self):
+        # Exclude biases and bn
+        if self.hparams.optimizer == "lars":
+            params = self._exclude_from_wt_decay(
+                self.named_parameters(),
+                weight_decay=self.hparams.weight_decay
+            )
+        else:
+            params = self.parameters()
+        return params
+
+    def _select_optimizer(self):
+        # Calculate scaled lr according to effective batch size
+        scaled_lr = self.hparams.base_lr * self.hparams.eff_batch_size / 256
+        # Select opimizer
+        opt_args = dict(
+            params=self._filter_params(),
+            lr=scaled_lr,
+            weight_decay=self.hparams.weight_decay,
+        )
+        if self.hparams.optimizer == "adam":
+            optimizer = torch.optim.Adam(**opt_args)
+        elif self.hparams.optimizer == "sgd":
+            optimizer = torch.optim.SGD(
+                momentum=self.hparams.momentum, **opt_args)
+        elif self.hparams.optimizer == "lars":
+            optimizer = LARS(
+                **opt_args,
+                momentum=0.9,
+                trust_coefficient=0.001,
+            )
+        else:
+            raise NotImplementedError("[ Error ] Optimizer is not implemented")
+        return optimizer
