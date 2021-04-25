@@ -7,8 +7,7 @@ base: &base
     first_conv: True
     momentum: 0.9
 
-    # TODO Check BYOL paper, add lars
-    # --->Adam && bolts default
+    # # --->Adam && bolts default
     # optimizer: adam
     # base_lr: 1e-3
     # weight_decay: 1.5e-6
@@ -17,16 +16,17 @@ base: &base
     # base_lr: 0.4
     # weight_decay: 1.5e-6
     # eff_batch_size: 512
-    # ---> LARS: BYOL TWCC exp
+    # # ---> LARS: BYOL TWCC exp
     optimizer: lars
     base_lr: 2.0
     weight_decay: 1e-6
-    eff_batch_size: 256
-
+    # eff_batch_size: 256
+    eff_batch_size: 512
     # # --->SGD: SimSiam
     # optimizer: sgd
-    # base_lr: 0.2
-    # weight_decay: 1.5e-6
+    # base_lr: 0.4
+    # weight_decay: 1e-6
+    # eff_batch_size: 512
 
   trainer:
     max_epochs: 1000

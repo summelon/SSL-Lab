@@ -88,6 +88,7 @@ class BaseModel(pl.LightningModule):
         # Select opimizer
         opt_args = dict(
             params=self._filter_params(),
+            # params=self.parameters(),
             lr=scaled_lr,
             weight_decay=self.hparams.weight_decay,
         )

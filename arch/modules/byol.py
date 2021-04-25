@@ -28,8 +28,10 @@ class BYOLModel(SimSiamModel):
         for param in self.target_network.parameters():
             param.requires_grad = False
         self.criterion = torch.nn.CosineSimilarity()
+        # TODO Check how momentum encoder update
         # Initial tau as 0.9995 under bs=512 setting according to paper
-        self.weight_callback = BYOLMAWeightUpdate(initial_tau=0.9995)
+        # self.weight_callback = BYOLMAWeightUpdate(initial_tau=0.9995)
+        self.weight_callback = BYOLMAWeightUpdate()
 
     def _asymmetric_loss(self, a, b):
         online_z, online_p = self.online_network(a)
