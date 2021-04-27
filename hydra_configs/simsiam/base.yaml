@@ -1,0 +1,16 @@
+defaults:
+  - ../common/base@_global_
+  - ../common/datamodule/${datamodule}@_global_
+  - model: fit
+  - backbone: resnet18
+  # Import after stage to update resent config
+  - datamodule: normal
+  - trainer: default
+  # Select according to datamodule or manual specify
+  - optional optimizer: null
+
+model_name: simsiam
+general:
+  warm_up_epochs: 10
+  device_batch_size: 128
+  num_workers: 4 * num_gpus

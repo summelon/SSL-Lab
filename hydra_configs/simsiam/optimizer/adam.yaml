@@ -1,0 +1,4 @@
+# Adam && bolts default
+optimizer: adam
+base_lr: 1e-3
+weight_decay: 1e-6

@@ -1,0 +1,21 @@
+# @package _global_
+trainer: common
+logger: common
+model: common
+basic:
+  # ---- Deterministic ----
+  seed: 666
+  # ---- Train ----
+  stage: ???
+  pretrained: ???
+  resume: ???
+  gpu: 4
+  # Check real value here
+  log_postfix: ""
+  # ---- Dataset ----
+  # dataset: in datamodule
+  # base_dir: in datamodule
+  # device_bs: in general
+  # ---- Model ----
+  # backbone: in model
+  # model: in model

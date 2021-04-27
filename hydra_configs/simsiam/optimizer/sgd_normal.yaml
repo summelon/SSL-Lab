@@ -1,0 +1,5 @@
+# SGD orig_paper
+optimizer: sgd
+base_lr: 0.05
+momentum: 0.9
+weight_decay: 1e-4

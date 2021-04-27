@@ -1,0 +1,8 @@
+backbone_name: resnet50
+mlp_config:
+  proj_hidden_dim: 2048
+  pred_hidden_dim: 512
+  out_dim: 2048
+  num_proj_mlp_layer: 3
+  proj_last_bn: True
+  using_predictor: True

@@ -1,0 +1,31 @@
+# @package _global_
+defaults:
+  - default.yaml
+
+datamodule:
+  dataset_name: cifar10
+  basic:
+    input_size: 32
+
+  data_module:
+    _target_: pl_bolts.datamodules.CIFAR10DataModule
+    data_dir: ${datamodule.basic.base_dir}
+    shuffle: True
+    pin_memory: True
+    val_split: 5000
+
+  train_transforms:
+    gaussian_blur: False
+    jitter_strength: 0.5
+    normalize:
+      _target_: pl_bolts.transforms.dataset_normalizations.cifar10_normalization
+
+  val_transforms:
+    gaussian_blur: False
+    jitter_strength: 0.5
+    normalize:
+      _target_: pl_bolts.transforms.dataset_normalizations.cifar10_normalization
+
+model:
+  maxpool1: False
+  first_conv: False

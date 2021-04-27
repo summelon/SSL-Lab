@@ -1,0 +1,13 @@
+# @package _global_
+defaults:
+  - default.yaml
+
+datamodule:
+  dataset_name: ???
+  basic:
+    input_size: 224
+
+  data_module:
+    _target_: dlhelper.dataset.PLDataModule
+    dataset_name: ${datamodule.dataset_name}
+    base_dir: ${datamodule.basic.base_dir}

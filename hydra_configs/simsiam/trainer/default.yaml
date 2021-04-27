@@ -1,0 +1,2 @@
+max_epochs: 800
+distributed_backend: 'ddp'

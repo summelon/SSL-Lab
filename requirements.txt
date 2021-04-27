@@ -1,0 +1,3 @@
+# ---- Hydra ----
+hydra-core==1.1.0.dev5
+hydra-colorlog==1.1.0.dev1
