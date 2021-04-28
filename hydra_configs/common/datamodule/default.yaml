@@ -1,13 +1,13 @@
 # @package _global_
 datamodule:
-  dataset_name: ???
+  dataset: ???
   basic:
     base_dir: /dev/shm
     input_size: ???
 
   data_module:
-    batch_size: ${general.device_batch_size}
-    num_workers: ${general.num_workers}
+    batch_size: ${basic.device_batch_size}
+    num_workers: ${basic.num_workers}
 
   train_transforms:
     _target_: pl_bolts.models.self_supervised.simclr.SimCLRTrainDataTransform
@@ -16,7 +16,3 @@ datamodule:
   val_transforms:
     _target_: pl_bolts.models.self_supervised.simclr.SimCLREvalDataTransform
     input_height: ${datamodule.basic.input_size}
-
-model:
-  maxpool1: True
-  first_conv: True

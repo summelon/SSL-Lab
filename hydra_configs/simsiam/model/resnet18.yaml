@@ -1,5 +1,4 @@
-backbone_name: resnet18
-mlp_config:
+mlp:
   # Only proj_hidden_dim is uncertained
   proj_hidden_dim: 512
   pred_hidden_dim: 512

@@ -1,5 +1,2 @@
 defaults:
-  - normal.yaml
-  - ../optimizer/cifar10@_global_.optimizer
-
-eff_batch_size: 512
+  - ../optimizer/sgd_cifar10@_global_

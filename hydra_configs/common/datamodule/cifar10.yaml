@@ -3,7 +3,7 @@ defaults:
   - default.yaml
 
 datamodule:
-  dataset_name: cifar10
+  dataset: cifar10
   basic:
     input_size: 32
 
@@ -27,5 +27,6 @@ datamodule:
       _target_: pl_bolts.transforms.dataset_normalizations.cifar10_normalization
 
 model:
-  maxpool1: False
-  first_conv: False
+  backbone:
+    maxpool1: False
+    first_conv: False

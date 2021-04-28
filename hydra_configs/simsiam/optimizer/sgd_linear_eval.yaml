@@ -1,0 +1,10 @@
+# SGD orig_paper, ~1% lower than LARS according to paper
+model:
+  optimizer:
+    _target_: torch.optim.SGD
+    momentum: 0.9
+    weight_decay: 0
+
+basic:
+  base_lr: 30.0
+  eff_batch_size: 256

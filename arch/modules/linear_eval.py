@@ -1,28 +1,24 @@
 import torch
 import pytorch_lightning as pl
 from pl_bolts.models.self_supervised import resnets
+from omegaconf import DictConfig
+
 from .base import BaseModel
 
 
 class LinearEvalModel(BaseModel):
     def __init__(
         self,
-        base_lr: float,
-        weight_decay: float,
-        momentum: float,
-        eff_batch_size: int,
-        warm_up_steps: int,
-        max_steps: int,
         num_classes: int,
         ckpt_path: str,
-        backbone: str,
-        optimizer: str = "adam",
+        backbone: DictConfig,
+        mlp: DictConfig,
+        optimizer: DictConfig,
+        scheduler: DictConfig,
     ):
         super().__init__()
         self.save_hyperparameters()
         state_dict = torch.load(ckpt_path)
-        self.maxpool1 = state_dict["hyper_parameters"]["maxpool1"]
-        self.first_conv = state_dict["hyper_parameters"]["first_conv"]
 
         self._prepare_model()
         self.load_state_dict(state_dict)
@@ -55,9 +51,9 @@ class LinearEvalModel(BaseModel):
         return loss
 
     def _prepare_model(self):
-        self.backbone = getattr(resnets, self.hparams.backbone)(
-            maxpool1=self.maxpool1,
-            first_conv=self.first_conv,
+        self.backbone = getattr(resnets, self.hparams.backbone.backbone)(
+            maxpool1=self.hparams.backbone.maxpool1,
+            first_conv=self.hparams.backbone.first_conv,
         )
         for param in self.backbone.parameters():
             param.requires_grad = False

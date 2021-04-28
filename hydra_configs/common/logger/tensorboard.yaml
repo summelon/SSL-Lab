@@ -1,0 +1,7 @@
+# @package _global_
+logger:
+  tensorboard_logger:
+    _target_: pytorch_lightning.loggers.TensorBoardLogger
+    save_dir: ${basic.cwd}/log/${name}
+    name: ${model.backbone.backbone}
+    version: ${datamodule.dataset}_${basic.log_postfix}

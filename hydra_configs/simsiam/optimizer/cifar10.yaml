@@ -1,5 +1,0 @@
-# Cifar SGD
-optimizer: sgd
-base_lr: 0.03
-momentum: 0.9
-weight_decay: 5e-4

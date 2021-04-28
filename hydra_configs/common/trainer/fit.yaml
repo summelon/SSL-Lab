@@ -1,0 +1,8 @@
+# @package _global_
+
+defaults:
+  - default@_global_
+  - ../callbacks/fit@_global_
+
+basic:
+  stage: fit

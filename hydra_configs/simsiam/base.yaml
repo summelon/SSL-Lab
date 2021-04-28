@@ -1,16 +1,19 @@
 defaults:
+  # ---- Default setting ----
   - ../common/base@_global_
   - ../common/datamodule/${datamodule}@_global_
-  - model: fit
-  - backbone: resnet18
-  # Import after stage to update resent config
+  - ../common/model/${model}@_global_
+  # Take care of linear eval model
+  - _self_
+  - ../common/trainer/${trainer}@_global_
+  # ---- Model specific ----
+  - model: resnet18
+  # Import after stage to update resent config in Cifar
   - datamodule: normal
-  - trainer: default
+  - trainer: fit
   # Select according to datamodule or manual specify
-  - optional optimizer: null
+  - optional optimizer@_global_: null
 
-model_name: simsiam
-general:
-  warm_up_epochs: 10
-  device_batch_size: 128
-  num_workers: 4 * num_gpus
+name: simsiam
+model:
+  _target_: arch.modules.simsiam.SimSiamModel

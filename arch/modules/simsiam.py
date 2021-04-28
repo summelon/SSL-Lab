@@ -1,6 +1,6 @@
-import math
-import torch
 import lightly
+from typing import Optional
+from omegaconf import DictConfig
 
 from .base import BaseModel
 from ..models.simsiam_arm import SiameseArm
@@ -9,18 +9,11 @@ from ..models.simsiam_arm import SiameseArm
 class SimSiamModel(BaseModel):
     def __init__(
         self,
-        base_lr: float,
-        weight_decay: float,
-        momentum: float,
-        eff_batch_size: int,
-        warm_up_steps: int,
-        max_steps: int,
-        num_classes: int,
-        maxpool1: bool,
-        first_conv: bool,
-        mlp_config: dict,
-        backbone: str = "resnet18",
-        optimizer: str = "adam",
+        backbone: DictConfig,
+        mlp: DictConfig,
+        optimizer: DictConfig,
+        scheduler: DictConfig,
+        num_classes: Optional[int] = None,
     ):
         super().__init__()
         self.save_hyperparameters()
@@ -50,14 +43,14 @@ class SimSiamModel(BaseModel):
 
     def _prepare_model(self):
         online_network = SiameseArm(
-            backbone=self.hparams.backbone,
-            first_conv=self.hparams.first_conv,
-            maxpool1=self.hparams.maxpool1,
-            proj_hidden_dim=self.hparams.mlp_config["proj_hidden_dim"],
-            pred_hidden_dim=self.hparams.mlp_config["pred_hidden_dim"],
-            out_dim=self.hparams.mlp_config["out_dim"],
-            num_proj_mlp_layer=self.hparams.mlp_config["num_proj_mlp_layer"],
-            proj_last_bn=self.hparams.mlp_config["proj_last_bn"],
-            using_predictor=self.hparams.mlp_config["using_predictor"],
+            backbone=self.hparams.backbone.backbone,
+            first_conv=self.hparams.backbone.first_conv,
+            maxpool1=self.hparams.backbone.maxpool1,
+            proj_hidden_dim=self.hparams.mlp.proj_hidden_dim,
+            pred_hidden_dim=self.hparams.mlp.pred_hidden_dim,
+            out_dim=self.hparams.mlp.out_dim,
+            num_proj_mlp_layer=self.hparams.mlp.num_proj_mlp_layer,
+            proj_last_bn=self.hparams.mlp.proj_last_bn,
+            using_predictor=self.hparams.mlp.using_predictor,
         )
         return online_network

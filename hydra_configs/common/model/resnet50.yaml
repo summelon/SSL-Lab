@@ -1,0 +1,10 @@
+# @package _global_
+defaults:
+  - resnet18@_global_
+
+model:
+  backbone:
+    backbone: resnet50
+
+basic:
+  num_features: 512

@@ -1,7 +1,7 @@
 import math
 import torch
+import hydra
 import pytorch_lightning as pl
-from pl_bolts.optimizers.lars import LARS
 
 
 class BaseModel(pl.LightningModule):
@@ -21,7 +21,11 @@ class BaseModel(pl.LightningModule):
             "[ Error ] `_prepare_model` method not implemented!")
 
     def configure_optimizers(self):
-        optimizer = self._select_optimizer()
+        optimizer: torch.optim.Optimizer = hydra.utils.instantiate(
+            self.hparams.optimizer,
+            params=self._filter_params(),
+            _convert_="all",
+        )
         scheduler = {
             'scheduler': torch.optim.lr_scheduler.LambdaLR(
                 optimizer, lr_lambda=self._custom_scheduler_fn()),
@@ -31,11 +35,12 @@ class BaseModel(pl.LightningModule):
         return [optimizer], [scheduler]
 
     def _custom_scheduler_fn(self):
-        max_steps = self.hparams.max_steps
+        max_steps = self.hparams.scheduler.max_steps
+        warm_up_steps = self.hparams.scheduler.warm_up_steps
 
         def _cosine_decay_scheduler(global_step):
-            if global_step < self.hparams.warm_up_steps:
-                lr_factor = global_step / self.hparams.warm_up_steps
+            if global_step < warm_up_steps:
+                lr_factor = global_step / warm_up_steps
             else:
                 global_step = min(global_step, max_steps)
                 lr_factor = \
@@ -82,27 +87,26 @@ class BaseModel(pl.LightningModule):
             params = self.parameters()
         return params
 
-    def _select_optimizer(self):
-        # Calculate scaled lr according to effective batch size
-        scaled_lr = self.hparams.base_lr * self.hparams.eff_batch_size / 256
-        # Select opimizer
-        opt_args = dict(
-            params=self._filter_params(),
-            # params=self.parameters(),
-            lr=scaled_lr,
-            weight_decay=self.hparams.weight_decay,
-        )
-        if self.hparams.optimizer == "adam":
-            optimizer = torch.optim.Adam(**opt_args)
-        elif self.hparams.optimizer == "sgd":
-            optimizer = torch.optim.SGD(
-                momentum=self.hparams.momentum, **opt_args)
-        elif self.hparams.optimizer == "lars":
-            optimizer = LARS(
-                **opt_args,
-                momentum=0.9,
-                trust_coefficient=0.001,
-            )
-        else:
-            raise NotImplementedError("[ Error ] Optimizer is not implemented")
-        return optimizer
+    # def _select_optimizer(self):
+    #     # Calculate scaled lr in yaml
+    #     # Select opimizer
+    #     opt_args = dict(
+    #         params=self._filter_params(),
+    #         # params=self.parameters(),
+    #         lr=scaled_lr,
+    #         weight_decay=self.hparams.weight_decay,
+    #     )
+    #     if self.hparams.optimizer == "adam":
+    #         optimizer = torch.optim.Adam(**opt_args)
+    #     elif self.hparams.optimizer == "sgd":
+    #         optimizer = torch.optim.SGD(
+    #             momentum=self.hparams.momentum, **opt_args)
+    #     elif self.hparams.optimizer == "lars":
+    #         optimizer = LARS(
+    #             **opt_args,
+    #             momentum=0.9,
+    #             trust_coefficient=0.001,
+    #         )
+    #     else:
+    #         raise NotImplementedError("[ Error ] Optimizer is not implemented")
+    #     return optimizer

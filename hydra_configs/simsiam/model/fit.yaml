@@ -1,5 +1,0 @@
-stage_name: fit
-# bs = 256/512 performs best in paper(ResNet50)
-eff_batch_size: 512
-maxpool1: True
-first_conv: True

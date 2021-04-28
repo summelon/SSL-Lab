@@ -1,0 +1,6 @@
+# stage: linear_eval
+defaults:
+  # TODO Try the effect of LARS
+  # - ../model/optimizer/lars_linear_eval@_global_.model
+  - ../optimizer/sgd_linear_eval@_global_
+max_epochs: 90

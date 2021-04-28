@@ -1,0 +1,3 @@
+# @package _global_
+optimizer:
+  lr: ${basic.base_lr} * ${basic.eff_batch_size} / 256

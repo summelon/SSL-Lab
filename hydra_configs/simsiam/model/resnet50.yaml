@@ -1,5 +1,4 @@
-backbone_name: resnet50
-mlp_config:
+mlp:
   proj_hidden_dim: 2048
   pred_hidden_dim: 512
   out_dim: 2048

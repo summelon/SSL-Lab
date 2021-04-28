@@ -5,67 +5,44 @@ warnings.simplefilter("ignore")
 
 def run(cfg):
     # Official module
-    import os
     import time
     import datetime
     import pytorch_lightning as pl
 
     # Current dir
-    import callbacks.custom_callbacks as custom_callbacks
-    from configs.get_config import get_config
-    from arguments import select_model
+    from utils.config_utils import complete_config
 
-    pl.seed_everything(args["seed"])
+    pl.seed_everything(cfg.basic.seed)
 
     tic = int(time.time())
-    # # Select specific SSL module
-    # LightningModule = select_model(args['model'], args['stage'])
-    # # Hyperparameters
-    # yaml_file = 'linear_eval' if args['stage'] == 'test' else args['model']
-    # yaml_file_path = os.path.join('./configs', yaml_file+'.yml')
 
     # DataModule
-    data_module = _prepare_data_module(args)
-    # Logger
-    tb_logger = pl.loggers.TensorBoardLogger(
-        save_dir=os.path.join(os.getcwd(), 'log', args['model']),
-        name=args['backbone'],
-        version=args["version_name"],
-    )
-    # Module-specifi config
-    config = get_config(
-        yaml_file_path=yaml_file_path,
-        data_module=data_module,
-        gpu_num=args['gpu'],
-        backbone=args['backbone'],
-    )
-    # Use pretrain weights
-    if args['stage'] == 'test':
-        config["model_config"]["ckpt_path"] = args["pretrained"]
+    data_module = _prepare_data_module(cfg)
+    cfg = complete_config(cfg, data_module)
+
     # Prepare model
-    model = LightningModule(**config['model_config'])
-    # Callbacks
-    if args['stage'] == 'fit':
-        lr_monitor = pl.callbacks.LearningRateMonitor(logging_interval='step')
-        online_linear = custom_callbacks.OnlineLinear(
-            num_features=model.online_network.num_features,
-            num_classes=model.hparams.num_classes,
-            dataset=args['dataset']
-        )
-        callbacks = [
-                lr_monitor,
-                online_linear,
-                custom_callbacks.CheckCollapse(),
-        ]
-    else:
-        callbacks = list()
-    # Prepare trainer
-    trainer = pl.Trainer(
-        **config['trainer_config'],
-        logger=tb_logger,
-        resume_from_checkpoint=args['resume'],
-        callbacks=callbacks,
+    model: pl.LightningModule = hydra.utils.instantiate(
+        cfg.model,
+        _recursive_=False,
     )
+
+    # Callbacks
+    callbacks = list()
+    if cfg.callbacks is not None:
+        for _, callback_config in cfg.callbacks.items():
+            callbacks.append(hydra.utils.instantiate(callback_config))
+
+    # Logger
+    logger = list()
+    if cfg.logger is not None:
+        for _, logger_config in cfg.logger.items():
+            logger.append(hydra.utils.instantiate(logger_config))
+
+    # Prepare trainer
+    # TODO: Check _convert_
+    trainer: pl.Trainer = hydra.utils.instantiate(
+        cfg.trainer, callbacks=callbacks, logger=logger, _convert_="partial")
+
     # Start Fitting/Testing
     trainer.fit(model, datamodule=data_module)
 
@@ -80,6 +57,8 @@ def _prepare_data_module(cfg):
         SimCLREvalDataTransform,
     )
 
+    cfg.datamodule.data_module.num_workers = \
+        eval(cfg.datamodule.data_module.num_workers)
     data_module: LightningDataModule = \
         hydra.utils.instantiate(cfg.datamodule.data_module)
 
@@ -90,7 +69,7 @@ def _prepare_data_module(cfg):
 
     data_module.setup()
 
-    return
+    return data_module
 
 
 if __name__ == "__main__":

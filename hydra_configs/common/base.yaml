@@ -1,21 +1,27 @@
 # @package _global_
-trainer: common
-logger: common
-model: common
+defaults:
+  - _self_
+  - logger/tensorboard@_global_
+  - optimizer/default@_global_.model
 basic:
+  cwd: ${hydra:runtime.cwd}
   # ---- Deterministic ----
   seed: 666
   # ---- Train ----
   stage: ???
-  pretrained: ???
-  resume: ???
-  gpu: 4
+  pretrained: null
+  resume: null
+  num_gpus: 4
   # Check real value here
   log_postfix: ""
+  warm_up_epochs: 10
   # ---- Dataset ----
   # dataset: in datamodule
   # base_dir: in datamodule
-  # device_bs: in general
+  device_batch_size: ???
+  num_workers: 4 * ${.num_gpus}
   # ---- Model ----
   # backbone: in model
   # model: in model
+logger: null
+callbacks: null

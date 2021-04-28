@@ -1,0 +1,11 @@
+# @package _global_
+
+defaults:
+  - default@_global_
+
+model:
+  ckpt_path: ${basic.pretrained}
+  _target_: arch.modules.linear_eval.LinearEvalModel
+
+basic:
+  stage: linear_eval
