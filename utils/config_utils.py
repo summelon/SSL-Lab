@@ -1,4 +1,5 @@
 import os
+import hydra
 from omegaconf import DictConfig
 from pytorch_lightning import LightningDataModule
 
@@ -49,6 +50,15 @@ def complete_config(
             os.path.join(pretrained_version, "linear_eval")
 
     return cfg
+
+
+def instantiate_list(class_cfg: DictConfig) -> list:
+    instance_list = list()
+    if class_cfg is not None:
+        for _, config in class_cfg.items():
+            instance_list.append(hydra.utils.instantiate(config))
+
+    return instance_list
 
 
 def _check_config(cfg):
