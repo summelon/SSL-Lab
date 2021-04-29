@@ -1,8 +1,9 @@
 defaults:
   # ---- Default setting ----
   - ../common/base@_global_
-  - ../common/datamodule/${datamodule}@_global_
+  # Take care of cifar backbone update
   - ../common/model/${model}@_global_
+  - ../common/datamodule/${datamodule}@_global_
   # Take care of linear eval model
   - _self_
   - ../common/trainer/${trainer}@_global_
@@ -11,7 +12,7 @@ defaults:
   # Import after stage to update resent config in Cifar
   - datamodule: normal
   - trainer: fit
-  # Select according to datamodule or manual specify
+  # Select by datamodule or manual specify
   - optional optimizer@_global_: null
 
 name: simsiam

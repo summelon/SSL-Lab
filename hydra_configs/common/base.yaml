@@ -23,5 +23,7 @@ basic:
   # ---- Model ----
   # backbone: in model
   # model: in model
+model:
+  scheduler: ???
 logger: null
 callbacks: null

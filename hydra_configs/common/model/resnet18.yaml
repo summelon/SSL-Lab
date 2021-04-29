@@ -1,7 +1,6 @@
 # @package _global_
 model:
   num_classes: ???
-  scheduler: ???
   backbone:
     backbone: resnet18
     first_conv: True
