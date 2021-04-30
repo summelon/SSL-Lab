@@ -1,8 +1,8 @@
 # @package _global_
-
 defaults:
-  - default@_global_
-  - ../callbacks/fit@_global_
+  - default@trainer
+  - arch_specific@trainer: fit
+  - override /callbacks: fit
 
 basic:
   stage: fit

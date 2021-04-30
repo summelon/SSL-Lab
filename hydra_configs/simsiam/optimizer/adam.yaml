@@ -1,9 +1,11 @@
+defaults:
+  - default@optimizer
+
 # Adam && bolts default
-model:
-  optimizer:
-    _target_: torch.optim.Adam
-    optimizer: adam
-    weight_decay: 1e-6
+optimizer:
+  _target_: torch.optim.Adam
+  optimizer: adam
+  weight_decay: 1e-6
 
 basic:
   base_lr: 1e-3

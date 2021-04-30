@@ -9,8 +9,7 @@ from .base import BaseModel
 class LinearEvalModel(BaseModel):
     def __init__(
         self,
-        num_classes: int,
-        ckpt_path: str,
+        basic: str,
         backbone: DictConfig,
         mlp: DictConfig,
         optimizer: DictConfig,
@@ -18,7 +17,7 @@ class LinearEvalModel(BaseModel):
     ):
         super().__init__()
         self.save_hyperparameters()
-        state_dict = torch.load(ckpt_path)
+        state_dict = torch.load(self.hparams.basic.ckpt_path)
 
         self._prepare_model()
         self.load_state_dict(state_dict)
@@ -59,7 +58,7 @@ class LinearEvalModel(BaseModel):
             param.requires_grad = False
         self.fc = torch.nn.Linear(
             self.backbone.fc.in_features,
-            self.hparams.num_classes,
+            self.hparams.basic.num_classes,
         )
         return
 

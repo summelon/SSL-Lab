@@ -1,3 +1,1 @@
-# @package _global_
-optimizer:
-  lr: ${basic.base_lr} * ${basic.eff_batch_size} / 256
+lr: ${model.basic.base_lr} * ${model.basic.eff_batch_size} / 256

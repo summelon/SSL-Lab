@@ -6,6 +6,8 @@ from omegaconf import DictConfig
 warnings.simplefilter("ignore")
 logging.getLogger("lightning").setLevel(logging.INFO)
 
+# TODO Checkpoint will save in the current working dir
+#       This is a problem in hydra, since it change the cwd
 
 def run(cfg: DictConfig) -> int:
     import pytorch_lightning as pl
@@ -68,7 +70,7 @@ def _prepare_data_module(cfg: DictConfig):
     return data_module
 
 
-@hydra.main(config_path="hydra_configs/", config_name="base")
+@hydra.main(config_path="hydra_configs/common", config_name="base")
 def main(cfg: DictConfig) -> None:
     import time
     import datetime

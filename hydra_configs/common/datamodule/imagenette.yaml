@@ -1,0 +1,5 @@
+defaults:
+  - normal_224
+
+basic:
+  name: imagenette

@@ -1,10 +1,12 @@
+defaults:
+  - default@optimizer
+
 # LARS orig_paper
-model:
-  optimizer:
-    _target_: pl_bolts.optimizers.lars.LARS
-    momentum: 0.9
-    weight_decay: 0
-    trust_coefficient: 0.001
+optimizer:
+  _target_: pl_bolts.optimizers.lars.LARS
+  momentum: 0.9
+  weight_decay: 0
+  trust_coefficient: 0.001
 
 basic:
   base_lr: 0.02

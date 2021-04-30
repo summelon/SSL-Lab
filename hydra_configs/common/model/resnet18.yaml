@@ -1,10 +1,8 @@
-# @package _global_
-model:
-  num_classes: ???
-  backbone:
-    backbone: resnet18
-    first_conv: True
-    maxpool1: True
+defaults:
+  - default
+  - mlp: resnet18
 
 basic:
   num_features: 512
+backbone:
+  backbone: resnet18

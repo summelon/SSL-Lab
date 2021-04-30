@@ -9,11 +9,11 @@ from ..models.simsiam_arm import SiameseArm
 class SimSiamModel(BaseModel):
     def __init__(
         self,
+        basic: DictConfig,
         backbone: DictConfig,
         mlp: DictConfig,
         optimizer: DictConfig,
         scheduler: DictConfig,
-        num_classes: Optional[int] = None,
     ):
         super().__init__()
         self.save_hyperparameters()

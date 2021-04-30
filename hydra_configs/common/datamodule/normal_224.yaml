@@ -1,0 +1,11 @@
+defaults:
+  - default
+  - /optimizer@_global_.model: normal
+
+basic:
+  input_size: 224
+
+data_module:
+  _target_: dlhelper.dataset.PLDataModule
+  dataset_name: ${datamodule.basic.name}
+  base_dir: ${datamodule.basic.base_dir}

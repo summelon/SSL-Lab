@@ -1,2 +1,0 @@
-defaults:
-  - ../optimizer/sgd_normal@_global_

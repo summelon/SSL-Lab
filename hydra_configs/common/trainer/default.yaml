@@ -1,10 +1,7 @@
-# @package _global_
-
-trainer:
-  _target_: pytorch_lightning.Trainer
-  gpus: ${basic.num_gpus}
-  max_epochs: ???
-  sync_batchnorm: ???
-  accumulate_grad_batches: ???
-  resume_from_checkpoint: ${basic.resume}
-  distributed_backend: "ddp"
+_target_: pytorch_lightning.Trainer
+gpus: ${basic.num_gpus}
+max_epochs: ???
+sync_batchnorm: ???
+accumulate_grad_batches: ???
+resume_from_checkpoint: ${basic.resume}
+distributed_backend: "ddp"

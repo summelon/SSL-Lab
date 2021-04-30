@@ -1,10 +1,12 @@
 # @package _global_
+# Redirect to global since need to modify model arguments
 defaults:
-  - default.yaml
+  - default@datamodule
+  - /optimizer@model: cifar10
 
 datamodule:
-  dataset: cifar10
   basic:
+    name: cifar10
     input_size: 32
 
   data_module:

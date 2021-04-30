@@ -1,18 +1,19 @@
-# @package _global_
-datamodule:
-  dataset: ???
-  basic:
-    base_dir: /dev/shm
-    input_size: ???
+basic:
+  name: ???
+  base_dir: /dev/shm
+  input_size: ???
+  # TODO modify num_classes input interface in utils
+  num_classes: ???
+  train_samples: ???
 
-  data_module:
-    batch_size: ${basic.device_batch_size}
-    num_workers: ${basic.num_workers}
+data_module:
+  batch_size: ${basic.device_batch_size}
+  num_workers: ${basic.num_workers}
 
-  train_transforms:
-    _target_: pl_bolts.models.self_supervised.simclr.SimCLRTrainDataTransform
-    input_height: ${datamodule.basic.input_size}
+train_transforms:
+  _target_: pl_bolts.models.self_supervised.simclr.SimCLRTrainDataTransform
+  input_height: ${datamodule.basic.input_size}
 
-  val_transforms:
-    _target_: pl_bolts.models.self_supervised.simclr.SimCLREvalDataTransform
-    input_height: ${datamodule.basic.input_size}
+val_transforms:
+  _target_: pl_bolts.models.self_supervised.simclr.SimCLREvalDataTransform
+  input_height: ${datamodule.basic.input_size}

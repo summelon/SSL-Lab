@@ -14,13 +14,14 @@ def complete_config(
 
     # Update arguments in scheduler
     if data_module.name == 'cifar10':
-        train_samples = data_module.num_samples
-        cfg.model.num_classes = data_module.num_classes
+        cfg.datamodule.basic.train_samples = data_module.num_samples
+        cfg.datamodule.basic.num_classes = data_module.num_classes
     else:
-        train_samples = len(data_module.train_set)
-        cfg.model.num_classes = len(data_module.train_set.classes)
+        cfg.datamodule.basic.train_samples = len(data_module.train_set)
+        cfg.datamodule.basic.num_classes = len(data_module.train_set.classes)
 
-    steps_per_epoch = train_samples // cfg.basic.eff_batch_size
+    steps_per_epoch = \
+        cfg.datamodule.basic.train_samples // cfg.model.basic.eff_batch_size
     cfg.model.scheduler = dict(
         warm_up_steps=cfg.basic.warm_up_epochs*steps_per_epoch,
         max_steps=cfg.trainer.max_epochs*steps_per_epoch,
@@ -33,7 +34,7 @@ def complete_config(
     cfg.trainer.sync_batchnorm = True if cfg.basic.num_gpus > 1 else False
     available_batches = data_module.batch_size * cfg.basic.num_gpus
     cfg.trainer.accumulate_grad_batches = \
-        int(cfg.basic.eff_batch_size/available_batches)
+        int(cfg.model.basic.eff_batch_size/available_batches)
     if cfg.trainer.accumulate_grad_batches < 1:
         raise ValueError("[Error] Effective batch size is too small!")
 
@@ -41,11 +42,11 @@ def complete_config(
     cfg.trainer.resume_from_checkpoint = \
         _check_ckpt(cfg.trainer.resume_from_checkpoint, cfg.basic.cwd)
     if cfg.basic.stage == "linear_eval":
-        cfg.model.ckpt_path = _check_ckpt(
+        cfg.model.basic.ckpt_path = _check_ckpt(
             cfg.basic.pretrained, cfg.basic.cwd, accept_none=False)
-        print(f"[ INFO ] Using weights from {cfg.model.ckpt_path}")
+        print(f"[ INFO ] Using weights from {cfg.model.basic.ckpt_path}")
         # Update log dir if in linear_eval mode
-        pretrained_version = cfg.model.ckpt_path.split('/')[-3]
+        pretrained_version = cfg.model.basic.ckpt_path.split('/')[-3]
         cfg.logger.tensorboard_logger.version = \
             os.path.join(pretrained_version, "linear_eval")
 
@@ -62,15 +63,7 @@ def instantiate_list(class_cfg: DictConfig) -> list:
 
 
 def _check_config(cfg):
-    # ---- Datamodule ----
-    if cfg.datamodule.dataset is None:
-        raise ValueError
-
-    if cfg.datamodule.dataset == "cifar10" \
-            and cfg.datamodule.basic.input_size != 32:
-        raise ValueError
-
-    return
+    pass
 
 
 def _check_ckpt(path, cwd, accept_none=True):

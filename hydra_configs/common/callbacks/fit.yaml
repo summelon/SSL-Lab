@@ -1,15 +1,12 @@
-# @package _gloabl_
+lr_monitor:
+  _target_: pytorch_lightning.callbacks.LearningRateMonitor
+  logging_interval: 'step'
 
-callbacks:
-  lr_monitor:
-    _target_: pytorch_lightning.callbacks.LearningRateMonitor
-    logging_interval: 'step'
+collapase_checker:
+  _target_: callbacks.custom_callbacks.CheckCollapse
 
-  collapase_checker:
-    _target_: callbacks.custom_callbacks.CheckCollapse
-
-  online_linear:
-    _target_: callbacks.custom_callbacks.OnlineLinear
-    num_features: ${basic.num_features}
-    num_classes: ${model.num_classes}
-    dataset: ${datamodule.dataset}
+online_linear:
+  _target_: callbacks.custom_callbacks.OnlineLinear
+  num_features: ${model.basic.num_features}
+  num_classes: ${datamodule.basic.num_classes}
+  dataset: ${datamodule.basic.name}

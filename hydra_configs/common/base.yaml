@@ -1,29 +1,30 @@
 # @package _global_
-defaults:
-  - _self_
-  - logger/tensorboard@_global_
-  - optimizer/default@_global_.model
+# defaults:
+#   - _self_
+#   - arch@_global_: ???
+#   - logger: tensorboard
+#   - callbacks: null
+#   # >>> Take care of special resnet for CIFAR-10
+#   - model: resnet18
+#   - datamodule: ???
+#   # <<<
+#   - trainer: fit
 basic:
   cwd: ${hydra:runtime.cwd}
   # ---- Deterministic ----
   seed: 666
-  # ---- Train ----
-  stage: ???
-  pretrained: null
-  resume: null
-  num_gpus: 4
-  # Check real value here
-  log_postfix: ""
-  warm_up_epochs: 10
+  # ---- Arch ----
+  name: ???
   # ---- Dataset ----
-  # dataset: in datamodule
-  # base_dir: in datamodule
   device_batch_size: ???
   num_workers: 4 * ${.num_gpus}
-  # ---- Model ----
-  # backbone: in model
-  # model: in model
-model:
-  scheduler: ???
+  # ---- Train ----
+  stage: ???
+  num_gpus: 4
+  log_postfix: "default"
+  warm_up_epochs: 10
+  pretrained: null
+  resume: null
+
 logger: null
 callbacks: null

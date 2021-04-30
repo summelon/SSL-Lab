@@ -1,10 +1,12 @@
 # @package _global_
-
 defaults:
-  - default@_global_
+  - default@trainer
+  - arch_specific@trainer: linear_eval
+  - override /optimizer@model: linear_eval
 
 model:
-  ckpt_path: ${basic.pretrained}
+  basic:
+    ckpt_path: ${basic.pretrained}
   _target_: arch.modules.linear_eval.LinearEvalModel
 
 basic:
