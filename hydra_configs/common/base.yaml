@@ -23,6 +23,7 @@ basic:
   num_gpus: 4
   log_postfix: "default"
   warm_up_epochs: 10
+  ckpt_foramt: ${basic.name}-${model.backbone.backbone}-${datamodule.basic.name}-{epoch:05d}-{step}
   pretrained: null
   resume: null
 

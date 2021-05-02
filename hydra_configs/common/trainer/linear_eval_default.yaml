@@ -2,6 +2,7 @@
 defaults:
   - default@trainer
   - override /optimizer@model: linear_eval
+  - override /callbacks: linear_eval
 
 model:
   basic:

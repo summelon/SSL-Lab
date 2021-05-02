@@ -1,3 +1,8 @@
+checkpoint_saver:
+  _target_: pytorch_lightning.callbacks.ModelCheckpoint
+  filename: ${basic.ckpt_foramt}
+  period: 25
+
 lr_monitor:
   _target_: pytorch_lightning.callbacks.LearningRateMonitor
   logging_interval: 'step'

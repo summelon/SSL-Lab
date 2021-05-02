@@ -43,7 +43,7 @@ def run(cfg: DictConfig) -> int:
         _convert_="partial",
     )
 
-    # Start Fitting/Testing
+    # Start Fitting/Linear_eval
     trainer.fit(model, datamodule=data_module)
 
     # Test in CIFAR10 dataset
@@ -71,6 +71,8 @@ def _prepare_data_module(cfg: DictConfig):
     data_module.train_transforms: SimCLRTrainDataTransform = \
         hydra.utils.instantiate(cfg.datamodule.train_transforms)
     data_module.val_transforms: SimCLREvalDataTransform = \
+        hydra.utils.instantiate(cfg.datamodule.val_transforms)
+    data_module.test_transforms: SimCLREvalDataTransform = \
         hydra.utils.instantiate(cfg.datamodule.val_transforms)
 
     data_module.setup()
