@@ -86,27 +86,3 @@ class BaseModel(pl.LightningModule):
         else:
             params = self.parameters()
         return params
-
-    # def _select_optimizer(self):
-    #     # Calculate scaled lr in yaml
-    #     # Select opimizer
-    #     opt_args = dict(
-    #         params=self._filter_params(),
-    #         # params=self.parameters(),
-    #         lr=scaled_lr,
-    #         weight_decay=self.hparams.weight_decay,
-    #     )
-    #     if self.hparams.optimizer == "adam":
-    #         optimizer = torch.optim.Adam(**opt_args)
-    #     elif self.hparams.optimizer == "sgd":
-    #         optimizer = torch.optim.SGD(
-    #             momentum=self.hparams.momentum, **opt_args)
-    #     elif self.hparams.optimizer == "lars":
-    #         optimizer = LARS(
-    #             **opt_args,
-    #             momentum=0.9,
-    #             trust_coefficient=0.001,
-    #         )
-    #     else:
-    #         raise NotImplementedError("[ Error ] Optimizer is not implemented")
-    #     return optimizer

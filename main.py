@@ -9,6 +9,7 @@ logging.getLogger("lightning").setLevel(logging.INFO)
 # TODO Checkpoint will save in the current working dir
 #       This is a problem in hydra, since it change the cwd
 
+
 def run(cfg: DictConfig) -> int:
     import pytorch_lightning as pl
 
@@ -44,6 +45,13 @@ def run(cfg: DictConfig) -> int:
 
     # Start Fitting/Testing
     trainer.fit(model, datamodule=data_module)
+
+    # Test in CIFAR10 dataset
+    if (
+        cfg.basic.stage == "linear_eval"
+        and cfg.datamodule.basic.name == "cifar10"
+    ):
+        trainer.test(model, datamodule=data_module)
 
     return model.global_rank
 

@@ -36,6 +36,9 @@ class LinearEvalModel(BaseModel):
     def validation_step(self, batch, batch_idx):
         return self._share_step("val", batch)
 
+    def test_step(self, batch, batch_idx):
+        return self._share_step("test", batch)
+
     def _share_step(self, stage: str, batch):
         # (x0, x1), _, _ = batch
         # (Aug0, Aug1, w/o aug), label
