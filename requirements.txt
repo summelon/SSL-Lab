@@ -1,3 +1,11 @@
 # ---- Hydra ----
-hydra-core==1.1.0.dev5
+hydra-core==1.1.0.dev6
 hydra-colorlog==1.1.0.dev1
+# ---- Torch ----
+torch==1.6.0
+torchvision==0.7.0
+pytorch-lightning==1.2.8
+# Test code:
+# pytorch-lightning==1.1.8
+lightning-bolts==0.3.3
+lightly==1.1.6
