@@ -16,4 +16,4 @@ basic:
 
 hydra:
   searchpath:
-    - pkg://hydra_configs/barlow_twins
+    - pkg://configs/barlow_twins

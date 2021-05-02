@@ -16,4 +16,4 @@ basic:
 
 hydra:
   searchpath:
-    - pkg://hydra_configs/byol
+    - pkg://configs/byol
