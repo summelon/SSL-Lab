@@ -1,5 +1,6 @@
 import torch
 from copy import deepcopy
+from omegaconf import DictConfig
 from pl_bolts.callbacks.byol_updates import BYOLMAWeightUpdate
 
 from .simsiam import SimSiamModel
@@ -8,18 +9,11 @@ from .simsiam import SimSiamModel
 class BYOLModel(SimSiamModel):
     def __init__(
         self,
-        base_lr: float,
-        weight_decay: float,
-        momentum: float,
-        eff_batch_size: int,
-        warm_up_steps: int,
-        max_steps: int,
-        num_classes: int,
-        maxpool1: bool,
-        first_conv: bool,
-        mlp_config: dict,
-        backbone: str = "resnet18",
-        optimizer: str = "adam",
+        basic: DictConfig,
+        backbone: DictConfig,
+        mlp: DictConfig,
+        optimizer: DictConfig,
+        scheduler: DictConfig,
     ):
         self.save_hyperparameters()
         super().__init__(**self.hparams)

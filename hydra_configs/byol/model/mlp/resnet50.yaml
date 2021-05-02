@@ -1,0 +1,3 @@
+# In BYOL the setting of MLP in ResNet50 is exactly the same as ResNet18
+defaults:
+  - resnet18

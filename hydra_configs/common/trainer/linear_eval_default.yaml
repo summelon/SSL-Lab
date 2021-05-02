@@ -1,7 +1,6 @@
 # @package _global_
 defaults:
   - default@trainer
-  - arch_specific@trainer: linear_eval
   - override /optimizer@model: linear_eval
 
 model:

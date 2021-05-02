@@ -1,0 +1,12 @@
+defaults:
+  - default@optimizer
+
+# TWCC exp
+optimizer:
+  _target_: pl_bolts.optimizers.lars.LARS
+  momentum: 0.9
+  weight_decay: 1e-6
+
+basic:
+  base_lr: 2.0
+  eff_batch_size: 256

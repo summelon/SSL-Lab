@@ -1,0 +1,8 @@
+# @package _global_
+defaults:
+  - linear_eval_default@_global_
+
+trainer:
+  max_epochs: 80
+basic:
+  warm_up_epochs: 0

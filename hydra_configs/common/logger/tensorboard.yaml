@@ -1,5 +1,5 @@
 tensorboard_logger:
   _target_: pytorch_lightning.loggers.TensorBoardLogger
-  save_dir: ${basic.cwd}/log/${.name}
+  save_dir: ${basic.cwd}/log/${basic.name}
   name: ${model.backbone.backbone}
   version: ${datamodule.basic.name}_${basic.log_postfix}

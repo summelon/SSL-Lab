@@ -1,0 +1,20 @@
+defaults:
+  - default@optimizer
+
+# LARS: BYOL paper
+optimizer:
+  _target_: pl_bolts.optimizers.lars.LARS
+  momentum: 0.9
+  weight_decay: 1.5e-6
+  trust_coefficient: 0.001
+
+basic:
+  base_lr: 0.4
+  eff_batch_size: 512
+
+
+    # # --->SGD: SimSiam
+    # optimizer: sgd
+    # base_lr: 0.4
+    # weight_decay: 1e-6
+    # eff_batch_size: 512

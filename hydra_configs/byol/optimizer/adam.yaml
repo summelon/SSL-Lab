@@ -1,0 +1,12 @@
+defaults:
+  - default@optimizer
+
+# Adam && bolts default
+optimizer:
+  _target_: torch.optim.Adam
+  optimizer: adam
+  weight_decay: 1.5e-6
+
+basic:
+  base_lr: 1e-3
+  eff_batch_size: 512
