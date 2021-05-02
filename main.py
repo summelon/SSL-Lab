@@ -80,7 +80,7 @@ def _prepare_data_module(cfg: DictConfig):
     return data_module
 
 
-@hydra.main(config_path="hydra_configs/common", config_name="base")
+@hydra.main(config_path="configs/common", config_name="base")
 def main(cfg: DictConfig) -> None:
     import time
     import datetime
