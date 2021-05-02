@@ -11,9 +11,9 @@ defaults:
 
 basic:
   # ---- Arch ----
-  name: byol
-  model_class: arch.modules.byol.BYOLModel
+  name: barlow_twins
+  model_class: arch.modules.barlow_twins.BarlowTwinsModel
 
 hydra:
   searchpath:
-    - pkg://hydra_configs/byol
+    - pkg://configs/barlow_twins

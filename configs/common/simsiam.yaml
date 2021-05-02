@@ -11,9 +11,9 @@ defaults:
 
 basic:
   # ---- Arch ----
-  name: barlow_twins
-  model_class: arch.modules.barlow_twins.BarlowTwinsModel
+  name: simsiam
+  model_class: arch.modules.simsiam.SimSiamModel
 
 hydra:
   searchpath:
-    - pkg://hydra_configs/barlow_twins
+    - pkg://configs/simsiam

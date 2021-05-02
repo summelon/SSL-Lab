@@ -11,9 +11,9 @@ defaults:
 
 basic:
   # ---- Arch ----
-  name: simsiam
-  model_class: arch.modules.simsiam.SimSiamModel
+  name: byol
+  model_class: arch.modules.byol.BYOLModel
 
 hydra:
   searchpath:
-    - pkg://hydra_configs/simsiam
+    - pkg://configs/byol
