@@ -3,6 +3,6 @@ defaults:
   - linear_eval_default@_global_
 
 trainer:
-  max_epochs: 80
+  max_epochs: 100
 basic:
   warmup_epochs: 0

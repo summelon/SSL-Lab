@@ -1,26 +1,23 @@
 import lightly
+from omegaconf import DictConfig
 
 from .simsiam import SimSiamModel
 
 
-class BarlowTwins(SimSiamModel):
+class BarlowTwinsModel(SimSiamModel):
     def __init__(
         self,
-        base_lr: float,
-        weight_decay: float,
-        momentum: float,
-        eff_batch_size: int,
-        warm_up_steps: int,
-        max_steps: int,
-        num_classes: int,
-        maxpool1: bool,
-        first_conv: bool,
-        mlp_config: dict,
-        backbone: str = "resnet18",
-        optimizer: str = "adam",
+        basic: DictConfig,
+        backbone: DictConfig,
+        mlp: DictConfig,
+        optimizer: DictConfig,
+        scheduler: DictConfig,
     ):
         self.save_hyperparameters()
         super().__init__(**self.hparams)
+        # TODO: Add hyper-parameter `lambd` according to GitHub repo
+        # TODO: Add hyper-parameter `scale-loss` according to GitHub repo
+        # Ref: https://github.com/facebookresearch/barlowtwins#barlow-twins-training
 
         self.criterion = lightly.loss.BarlowTwinsLoss()
 

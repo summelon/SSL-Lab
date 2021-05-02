@@ -1,0 +1,6 @@
+proj_hidden_dim: 8192
+pred_hidden_dim: 0
+out_dim: 8192
+num_proj_mlp_layer: 3
+proj_last_bn: False
+using_predictor: False

@@ -22,10 +22,10 @@ def complete_config(
 
     steps_per_epoch = \
         cfg.datamodule.basic.train_samples // cfg.model.basic.eff_batch_size
-    cfg.model.scheduler = dict(
-        warm_up_steps=cfg.basic.warm_up_epochs*steps_per_epoch,
-        max_steps=cfg.trainer.max_epochs*steps_per_epoch,
-    )
+    cfg.model.scheduler.warmup_steps = \
+        cfg.basic.warmup_epochs * steps_per_epoch
+    cfg.model.scheduler.max_steps = \
+        cfg.trainer.max_epochs * steps_per_epoch
 
     # Update arguments in optimizer
     cfg.model.optimizer.lr = eval(cfg.model.optimizer.lr)

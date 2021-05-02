@@ -1,0 +1,19 @@
+defaults:
+  - base
+  - _self_
+  - logger: tensorboard
+  - callbacks: null
+  # >>> Take care of special resnet for CIFAR-10
+  - model: resnet18
+  - datamodule: ???
+  # <<<
+  - trainer: fit
+
+basic:
+  # ---- Arch ----
+  name: barlow_twins
+  model_class: arch.modules.barlow_twins.BarlowTwinsModel
+
+hydra:
+  searchpath:
+    - pkg://hydra_configs/barlow_twins

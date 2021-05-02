@@ -36,15 +36,22 @@ class BaseModel(pl.LightningModule):
 
     def _custom_scheduler_fn(self):
         max_steps = self.hparams.scheduler.max_steps
-        warm_up_steps = self.hparams.scheduler.warm_up_steps
+        warmup_steps = self.hparams.scheduler.warmup_steps
+        base_lr = self.hparams.optimizer.lr
+        start_lr = self.hparams.scheduler.start_lr
+        eta_min = self.hparams.scheduler.end_lr
 
         def _cosine_decay_scheduler(global_step):
-            if global_step < warm_up_steps:
-                lr_factor = global_step / warm_up_steps
+            if global_step < warmup_steps:
+                scaled_linear_range = \
+                    (base_lr - start_lr) * (global_step / warmup_steps)
+                lr_factor = (start_lr + scaled_linear_range) / base_lr
             else:
                 global_step = min(global_step, max_steps)
-                lr_factor = \
+                progress = \
                     0.5 * (1 + math.cos(math.pi * global_step / max_steps))
+                lr_factor = \
+                    (eta_min + (base_lr - eta_min) * progress) / base_lr
             return lr_factor
         return _cosine_decay_scheduler
 

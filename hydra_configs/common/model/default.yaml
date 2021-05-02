@@ -1,10 +1,18 @@
 _target_: ${basic.model_class}
+
 basic:
   num_classes: ${datamodule.basic.num_classes}
   base_lr: ${basic.base_lr}
   eff_batch_size: ${basic.eff_batch_size}
-scheduler: ???
+
+scheduler:
+  max_steps: ???
+  warmup_steps: ???
+  start_lr: 0.0
+  end_lr: 0.0
+
 backbone:
   first_conv: True
   maxpool1: True
+
 mlp: ???
