@@ -1,5 +1,6 @@
 import os
 import hydra
+import torch
 from omegaconf import DictConfig
 from pytorch_lightning import LightningDataModule
 
@@ -36,7 +37,10 @@ def complete_config(
     cfg.trainer.accumulate_grad_batches = \
         int(cfg.model.basic.eff_batch_size/available_batches)
     if cfg.trainer.accumulate_grad_batches < 1:
-        raise ValueError("[Error] Effective batch size is too small!")
+        raise ValueError(
+            "[Error] Effective batch"
+            f"({cfg.model.basic.eff_batch_size}) size is too small!"
+        )
 
     # Check resume & pretrain
     cfg.trainer.resume_from_checkpoint = \
@@ -63,7 +67,13 @@ def instantiate_list(class_cfg: DictConfig) -> list:
 
 
 def _check_config(cfg):
-    pass
+    if torch.cuda.device_count() < cfg.basic.num_gpus:
+        raise ValueError(
+            f"[Error] GPU amount required({cfg.basic.num_gpus})"
+            f"exceed maximum({torch.cuda.device_count()})!"
+        )
+
+    return
 
 
 def _check_ckpt(path, cwd, accept_none=True):
