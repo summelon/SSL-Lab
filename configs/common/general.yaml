@@ -1,0 +1,18 @@
+defaults:
+  - base
+  - _self_
+  - logger: tensorboard
+  - callbacks: ${trainer}
+  # >>> Take care of special resnet for CIFAR-10
+  - model: resnet18
+  - datamodule: ???
+  # <<<
+  - trainer: ???
+  - override model/mlp: null
+
+basic:
+  name: ${.stage}
+
+hydra:
+  searchpath:
+    - pkg://configs/general

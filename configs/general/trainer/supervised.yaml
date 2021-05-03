@@ -1,0 +1,13 @@
+# @package _global_
+
+defaults:
+  - fit_default@_global_
+  - override /callbacks@_global_: supervised
+  - override /optimizer@model: supervised
+
+basic:
+  stage: supervised
+  model_class: arch.modules.supervised.SupervisedModel
+
+trainer:
+  max_epochs: 100

@@ -93,3 +93,16 @@ class BaseModel(pl.LightningModule):
         else:
             params = self.parameters()
         return params
+
+    def _load_state_dict_to_specific_part(self, network, state_dict):
+        dict_zip = zip(
+            state_dict["state_dict"].items(),
+            network.state_dict().items()
+        )
+        match_dict = {}
+        for (s_k, s_v), (m_k, m_v) in dict_zip:
+            if (m_k in s_k) and (s_v.shape == m_v.shape):
+                match_dict[m_k] = s_v
+        msg = network.load_state_dict(match_dict, strict=False)
+        print(f"[ INFO ] Missing keys: {msg.missing_keys}")
+        return

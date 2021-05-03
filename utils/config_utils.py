@@ -45,7 +45,7 @@ def complete_config(
     # Check resume & pretrain
     cfg.trainer.resume_from_checkpoint = \
         _check_ckpt(cfg.trainer.resume_from_checkpoint, cfg.basic.cwd)
-    if cfg.basic.stage == "linear_eval":
+    if cfg.basic.stage in ["linear_eval", "self_train"]:
         cfg.model.basic.ckpt_path = _check_ckpt(
             cfg.basic.pretrained, cfg.basic.cwd, accept_none=False)
         print(f"[ INFO ] Using weights from {cfg.model.basic.ckpt_path}")
@@ -73,15 +73,27 @@ def _check_config(cfg):
             f"exceed maximum({torch.cuda.device_count()})!"
         )
 
+    if (
+        cfg.basic.stage == "self_train"
+        and "linear_eval" not in cfg.basic.pretrained
+    ):
+        raise ValueError(
+            "[Error] Should use checkpoint from linear evaluation, "
+            f"but not {cfg.basic.pretrained}"
+        )
+
     return
 
 
 def _check_ckpt(path, cwd, accept_none=True):
     need_cwd = (path is not None) and (not os.path.isfile(path))
+    # Relative path may be wrong since cwd changed
     if need_cwd:
         path = os.path.join(cwd, path)
         if not os.path.isfile(path):
+            # Path is still wrong after add cwd path
             raise ValueError(f"[Error] Wrong ckpt path: {path}!")
+    # Linear_eval need a pretrained weight path
     elif not accept_none:
         raise ValueError(f"[Error] Wrong ckpt path: {path}!")
 

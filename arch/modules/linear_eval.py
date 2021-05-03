@@ -20,7 +20,7 @@ class LinearEvalModel(BaseModel):
         state_dict = torch.load(self.hparams.basic.ckpt_path)
 
         self._prepare_model()
-        self.load_state_dict(state_dict)
+        self._load_state_dict_to_specific_part(self.backbone, state_dict)
         self.criterion = torch.nn.CrossEntropyLoss()
         # TODO metrics.Accuracy may be wrong over v1.2
         self.train_acc = pl.metrics.Accuracy()
@@ -29,7 +29,7 @@ class LinearEvalModel(BaseModel):
 
     def forward(self, x):
         out = self.backbone(x)[0]
-        out = self.fc(out)
+        out = self.backbone.fc(out)
         return out
 
     def training_step(self, batch, batch_idx):
@@ -61,21 +61,8 @@ class LinearEvalModel(BaseModel):
         )
         for param in self.backbone.parameters():
             param.requires_grad = False
-        self.fc = torch.nn.Linear(
+        self.backbone.fc = torch.nn.Linear(
             self.backbone.fc.in_features,
             self.hparams.basic.num_classes,
         )
-        return
-
-    def load_state_dict(self, state_dict):
-        dict_zip = zip(
-            state_dict["state_dict"].items(),
-            self.backbone.state_dict().items()
-        )
-        match_dict = {}
-        for (s_k, s_v), (m_k, m_v) in dict_zip:
-            if (m_k in s_k) and (s_v.shape == m_v.shape):
-                match_dict[m_k] = s_v
-        msg = self.backbone.load_state_dict(match_dict, strict=False)
-        print(f"[ INFO ] Missing keys: {msg.missing_keys}")
         return

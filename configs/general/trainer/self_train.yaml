@@ -1,0 +1,23 @@
+# @package _global_
+
+defaults:
+  - fit_default@_global_
+  - override /callbacks@_global_: self_train
+  - override /optimizer@model: self_train
+
+basic:
+  stage: self_train
+  model_class: arch.modules.self_train.SelfTrainModel
+
+trainer:
+  max_epochs: 100
+
+model:
+  basic:
+    # Linear_eval case
+    ckpt_path: ${basic.pretrained}
+    # Alpha = 1: using kd_loss only
+    alpha: 1.0
+    temperature: 1.0
+    student_size: same
+

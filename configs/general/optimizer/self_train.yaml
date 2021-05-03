@@ -1,0 +1,13 @@
+defaults:
+  - default@optimizer
+
+# LARS in SimCLR-V2 GitHub
+optimizer:
+  _target_: pl_bolts.optimizers.lars.LARS
+  momentum: 0.9
+  weight_decay: 1e-4
+  trust_coefficient: 0.001
+
+basic:
+  base_lr: 2.0
+  eff_batch_size: 512

@@ -1,5 +1,5 @@
 defaults:
-  - normal_224
+  - normal_224@_group_
 
 basic:
   name: imagenette
