@@ -23,7 +23,9 @@ class LinearEvalModel(BaseModel):
         self.load_state_dict(state_dict)
         self.criterion = torch.nn.CrossEntropyLoss()
         # TODO metrics.Accuracy may be wrong over v1.2
-        self.accuracy = pl.metrics.Accuracy()
+        self.train_acc = pl.metrics.Accuracy()
+        self.val_acc = pl.metrics.Accuracy()
+        self.test_acc = pl.metrics.Accuracy()
 
     def forward(self, x):
         out = self.backbone(x)[0]
@@ -31,22 +33,22 @@ class LinearEvalModel(BaseModel):
         return out
 
     def training_step(self, batch, batch_idx):
-        return self._share_step("train", batch)
+        return self._share_step("train", batch, self.train_acc)
 
     def validation_step(self, batch, batch_idx):
-        return self._share_step("val", batch)
+        return self._share_step("val", batch, self.val_acc)
 
     def test_step(self, batch, batch_idx):
-        return self._share_step("test", batch)
+        return self._share_step("test", batch, self.test_acc)
 
-    def _share_step(self, stage: str, batch):
+    def _share_step(self, stage: str, batch, acc_metric):
         # (x0, x1), _, _ = batch
         # (Aug0, Aug1, w/o aug), label
         (_, _, imgs), lbls = batch
         preds = self(imgs)
         loss = self.criterion(preds, lbls)
         self.log(
-            f'test_{stage}_acc', self.accuracy(preds, lbls),
+            f'test_{stage}_acc', acc_metric(preds, lbls),
             prog_bar=True, logger=True,
             on_step=False, on_epoch=True, sync_dist=True
         )
