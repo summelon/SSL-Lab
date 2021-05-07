@@ -3,7 +3,6 @@ import torch
 from omegaconf import DictConfig
 from pl_bolts.models.self_supervised import resnets
 from torchmetrics import Accuracy
-from torchmetrics.functional import accuracy
 
 from .base import BaseModel
 
@@ -23,6 +22,8 @@ class SelfTrainModel(BaseModel):
         state_dict = torch.load(self.hparams.basic.ckpt_path)
         self.teacher = self._prepare_teacher(state_dict)
         self.student = self._prepare_student()
+        # Load weights to teacher after deepcopying from teacher to student
+        self._load_state_dict_to_specific_part(self.teacher, state_dict)
         # Freeze teacher after (perhaps) copy from teacher to student
         for param in self.teacher.parameters():
             param.requires_grad = False
@@ -107,7 +108,6 @@ class SelfTrainModel(BaseModel):
             teacher_network.fc.in_features,
             state_dict["hyper_parameters"]["basic"]["num_classes"],
         )
-        self._load_state_dict_to_specific_part(teacher_network, state_dict)
         return teacher_network
 
     def _prepare_student(self):
