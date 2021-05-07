@@ -1,5 +1,4 @@
 import torch
-import pytorch_lightning as pl
 from omegaconf import DictConfig
 from torchmetrics import Accuracy
 from pl_bolts.models.self_supervised import resnets
@@ -7,7 +6,7 @@ from pl_bolts.models.self_supervised import resnets
 from .base import BaseModel
 
 
-class LinearEvalModel(BaseModel):
+class SupervisedModel(BaseModel):
     def __init__(
         self,
         basic: str,
@@ -18,12 +17,15 @@ class LinearEvalModel(BaseModel):
     ):
         super().__init__()
         self.save_hyperparameters()
-        state_dict = torch.load(self.hparams.basic.ckpt_path)
 
-        self._prepare_model()
-        self._load_state_dict_to_specific_part(self.backbone, state_dict)
+        if basic.linear_eval:
+            self._prepare_model(supervised=False)
+            state_dict = torch.load(self.hparams.basic.ckpt_path)
+            self._load_state_dict_to_specific_part(self.backbone, state_dict)
+        else:
+            # Full supervised learning
+            self._prepare_model(supervised=True)
         self.criterion = torch.nn.CrossEntropyLoss()
-        # TODO metrics.Accuracy may be wrong over v1.2
         self.train_acc = Accuracy()
         self.val_acc = Accuracy()
         self.test_acc = Accuracy()
@@ -49,20 +51,23 @@ class LinearEvalModel(BaseModel):
         preds = self(imgs)
         loss = self.criterion(preds, lbls)
         self.log(
-            f'test_{stage}_acc',
+            f'supervised_{stage}_acc',
             acc_metric(preds.argmax(dim=1), lbls),
             prog_bar=True, logger=True,
             on_step=False, on_epoch=True, sync_dist=True,
         )
         return loss
 
-    def _prepare_model(self):
+    def _prepare_model(self, supervised=False):
         self.backbone = getattr(resnets, self.hparams.backbone.backbone)(
+            pretrained=supervised,
             maxpool1=self.hparams.backbone.maxpool1,
             first_conv=self.hparams.backbone.first_conv,
         )
-        for param in self.backbone.parameters():
-            param.requires_grad = False
+        if not supervised:
+            # Freeze backbone weights in linear evaluation
+            for param in self.backbone.parameters():
+                param.requires_grad = False
         self.backbone.fc = torch.nn.Linear(
             self.backbone.fc.in_features,
             self.hparams.basic.num_classes,

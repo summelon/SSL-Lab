@@ -6,8 +6,13 @@ defaults:
   - override /optimizer@model: supervised
 
 basic:
-  stage: supervised
+  name: supervised
+  stage: ${.name}
   model_class: arch.modules.supervised.SupervisedModel
 
 trainer:
   max_epochs: 100
+
+model:
+  basic:
+    linear_eval: False

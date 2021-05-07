@@ -2,12 +2,13 @@
 defaults:
   - default@trainer
   - override /optimizer@model: linear_eval
-  - override /callbacks: linear_eval
-
-model:
-  basic:
-    ckpt_path: ${basic.pretrained}
-  _target_: arch.modules.linear_eval.LinearEvalModel
+  - override /callbacks: supervised
 
 basic:
   stage: linear_eval
+  model_class: arch.modules.supervised.SupervisedModel
+
+model:
+  basic:
+    linear_eval: true
+    ckpt_path: ${basic.pretrained}
