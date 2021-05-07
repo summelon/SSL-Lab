@@ -2,6 +2,8 @@ import copy
 import torch
 from omegaconf import DictConfig
 from pl_bolts.models.self_supervised import resnets
+from torchmetrics import Accuracy
+from torchmetrics.functional import accuracy
 
 from .base import BaseModel
 
@@ -25,13 +27,13 @@ class SelfTrainModel(BaseModel):
         for param in self.teacher.parameters():
             param.requires_grad = False
         self.classify_criterion = torch.nn.CrossEntropyLoss()
+        self.t_acc = Accuracy()
+        self.s_acc = Accuracy()
 
     def forward(self, x):
-        teacher_features = self.teacher(x)[0]
-        teacher_logits = self.teacher.fc(teacher_features)
         student_features = self.student(x)[0]
         student_logits = self.student.fc(student_features)
-        return (teacher_logits, student_logits)
+        return student_logits
 
     def _kd_loss(self, t_logits, s_logits, temperature):
         t_probs = torch.nn.functional.softmax(
@@ -55,12 +57,14 @@ class SelfTrainModel(BaseModel):
     def training_step(self, batch, batch_idx):
         # (x0, x1), _, _ = batch
         # (Aug0, Aug1, w/o aug), label
-        (x0, x1, _), lbls = batch
-        (teacher_logits, student_logits) = self(x0)
+        (images, _, _), labels = batch
+        teacher_features = self.teacher(images)[0]
+        teacher_logits = self.teacher.fc(teacher_features)
+        student_logits = self(images)
 
         classify_loss = self.classify_criterion(
             student_logits,
-            lbls
+            labels
         )
         kd_loss = self._kd_loss(
             teacher_logits,
@@ -71,11 +75,14 @@ class SelfTrainModel(BaseModel):
         alpha = self.hparams.basic.alpha
         loss = (1 - alpha) * classify_loss + alpha * kd_loss
 
-        self.log_dict({
-            'kd_loss': kd_loss,
-            'classify_loss': classify_loss,
-            'total_loss': loss
-        })
+        log_dict = {
+            "kd_loss": kd_loss,
+            "classify_loss": classify_loss,
+            "total_loss": loss,
+            "teacher_acc": self.t_acc(teacher_logits.argmax(dim=-1), labels),
+            "student_acc": self.s_acc(student_logits.argmax(dim=-1), labels),
+        }
+        self.log_dict(log_dict, prog_bar=True)
         return loss
 
     def _prepare_teacher(self, state_dict):
@@ -106,6 +113,3 @@ class SelfTrainModel(BaseModel):
                 self.teacher.fc.out_features,
             )
         return student_network
-
-    def on_save_checkpoint(self):
-        pass

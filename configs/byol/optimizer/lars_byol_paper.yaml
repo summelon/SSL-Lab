@@ -9,12 +9,6 @@ optimizer:
   trust_coefficient: 0.001
 
 basic:
+  # NOTE: This base_lr may only be suitable for ImageNet, underfitting in Food11
   base_lr: 0.4
   eff_batch_size: 512
-
-
-    # # --->SGD: SimSiam
-    # optimizer: sgd
-    # base_lr: 0.4
-    # weight_decay: 1e-6
-    # eff_batch_size: 512

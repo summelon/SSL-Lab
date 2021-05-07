@@ -46,13 +46,13 @@ def complete_config(
     cfg.trainer.resume_from_checkpoint = \
         _check_ckpt(cfg.trainer.resume_from_checkpoint, cfg.basic.cwd)
     if cfg.basic.stage in ["linear_eval", "self_train"]:
+        pretrained_version = cfg.model.basic.ckpt_path.split('/')[3]
         cfg.model.basic.ckpt_path = _check_ckpt(
             cfg.basic.pretrained, cfg.basic.cwd, accept_none=False)
         print(f"[ INFO ] Using weights from {cfg.model.basic.ckpt_path}")
         # Update log dir if in linear_eval mode
-        pretrained_version = cfg.model.basic.ckpt_path.split('/')[-3]
         cfg.logger.tensorboard_logger.version = \
-            os.path.join(pretrained_version, "linear_eval")
+            os.path.join(pretrained_version, cfg.basic.stage)
 
     return cfg
 

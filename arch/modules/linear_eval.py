@@ -1,7 +1,8 @@
 import torch
 import pytorch_lightning as pl
-from pl_bolts.models.self_supervised import resnets
 from omegaconf import DictConfig
+from torchmetrics import Accuracy
+from pl_bolts.models.self_supervised import resnets
 
 from .base import BaseModel
 
@@ -23,9 +24,9 @@ class LinearEvalModel(BaseModel):
         self._load_state_dict_to_specific_part(self.backbone, state_dict)
         self.criterion = torch.nn.CrossEntropyLoss()
         # TODO metrics.Accuracy may be wrong over v1.2
-        self.train_acc = pl.metrics.Accuracy()
-        self.val_acc = pl.metrics.Accuracy()
-        self.test_acc = pl.metrics.Accuracy()
+        self.train_acc = Accuracy()
+        self.val_acc = Accuracy()
+        self.test_acc = Accuracy()
 
     def forward(self, x):
         out = self.backbone(x)[0]
@@ -48,9 +49,10 @@ class LinearEvalModel(BaseModel):
         preds = self(imgs)
         loss = self.criterion(preds, lbls)
         self.log(
-            f'test_{stage}_acc', acc_metric(preds, lbls),
+            f'test_{stage}_acc',
+            acc_metric(preds.argmax(dim=1), lbls),
             prog_bar=True, logger=True,
-            on_step=False, on_epoch=True, sync_dist=True
+            on_step=False, on_epoch=True, sync_dist=True,
         )
         return loss
 

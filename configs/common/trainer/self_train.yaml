@@ -1,7 +1,6 @@
 # @package _global_
-
 defaults:
-  - fit_default@_global_
+  - default@trainer
   - override /callbacks@_global_: self_train
   - override /optimizer@model: self_train
 
@@ -20,4 +19,5 @@ model:
     alpha: 1.0
     temperature: 1.0
     student_size: same
+  mlp: null
 
