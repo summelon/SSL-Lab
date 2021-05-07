@@ -47,10 +47,7 @@ def run(cfg: DictConfig) -> int:
     trainer.fit(model, datamodule=data_module)
 
     # Test in CIFAR10 dataset
-    if (
-        cfg.basic.stage == "linear_eval"
-        and cfg.datamodule.basic.name == "cifar10"
-    ):
+    if cfg.basic.stage in ["linear_eval", "self_train", "supervised"]:
         trainer.test(model, datamodule=data_module)
 
     return model.global_rank

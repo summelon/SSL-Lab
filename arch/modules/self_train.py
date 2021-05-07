@@ -29,6 +29,7 @@ class SelfTrainModel(BaseModel):
         self.classify_criterion = torch.nn.CrossEntropyLoss()
         self.t_acc = Accuracy()
         self.s_acc = Accuracy()
+        self.test_acc = Accuracy()
 
     def forward(self, x):
         student_features = self.student(x)[0]
@@ -75,14 +76,25 @@ class SelfTrainModel(BaseModel):
         alpha = self.hparams.basic.alpha
         loss = (1 - alpha) * classify_loss + alpha * kd_loss
 
-        log_dict = {
+        metrics = {
             "kd_loss": kd_loss,
             "classify_loss": classify_loss,
             "total_loss": loss,
-            "teacher_acc": self.t_acc(teacher_logits.argmax(dim=-1), labels),
-            "student_acc": self.s_acc(student_logits.argmax(dim=-1), labels),
+            "teacher_acc": self.t_acc(teacher_logits.argmax(dim=1), labels),
+            "student_acc": self.s_acc(student_logits.argmax(dim=1), labels),
         }
-        self.log_dict(log_dict, prog_bar=True)
+        self.log_dict(metrics, prog_bar=True)
+        return loss
+
+    def test_step(self, batch, batch_idx):
+        (_, _, images), labels = batch
+        logits = self(images)
+        loss = self.classify_criterion(logits, labels)
+        self.log(
+            "test_test_acc",
+            self.test_acc(logits.argmax(dim=1), labels),
+            prog_bar=True,
+        )
         return loss
 
     def _prepare_teacher(self, state_dict):
