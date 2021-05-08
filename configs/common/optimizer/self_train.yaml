@@ -9,5 +9,7 @@ optimizer:
   trust_coefficient: 0.001
 
 basic:
-  base_lr: 2.0
-  eff_batch_size: 512
+  # In SimCLR-V2: 6.4 = 0.1 * sqrt(eff_bs)
+  # eff_lr = base_lr * (eff_bs / 256)
+  base_lr: 0.4
+  eff_batch_size: 4096
