@@ -46,7 +46,8 @@ def complete_config(
     cfg.trainer.resume_from_checkpoint = \
         _check_ckpt(cfg.trainer.resume_from_checkpoint, cfg.basic.cwd)
     if cfg.basic.stage in ["linear_eval", "self_train"]:
-        pretrained_version = cfg.model.basic.ckpt_path.split('/')[3]
+        ckpt_path_list = cfg.model.basic.ckpt_path.split("/")
+        pretrained_version = ckpt_path_list[ckpt_path_list.index("log")+3]
         cfg.model.basic.ckpt_path = _check_ckpt(
             cfg.basic.pretrained, cfg.basic.cwd, accept_none=False)
         print(f"[ INFO ] Using weights from {cfg.model.basic.ckpt_path}")
