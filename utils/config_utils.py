@@ -1,4 +1,5 @@
 import os
+import math
 import hydra
 import torch
 from omegaconf import DictConfig
@@ -27,6 +28,11 @@ def complete_config(
         cfg.basic.warmup_epochs * steps_per_epoch
     cfg.model.scheduler.max_steps = \
         cfg.trainer.max_epochs * steps_per_epoch
+
+    # Update arguments in backbone
+    if cfg.model.mlp.norm == "gn":
+        rounded_power = math.ceil(math.log2(cfg.datamodule.basic.num_classes))
+        cfg.model.mlp.num_groups = 2 ** rounded_power
 
     # Update arguments in optimizer
     cfg.model.optimizer.lr = eval(cfg.model.optimizer.lr)

@@ -22,6 +22,17 @@ def _torchvision_ssl_encoder(
     return pretrained_model
 
 
+def _select_norm_fn(choice, num_channels, num_groups=0):
+    if choice == "bn":
+        return nn.BatchNorm1d(num_channels)
+    elif choice == "gn":
+        if num_groups == 0:
+            raise ValueError("[Error] num_groups in GN should not be 0!")
+        return nn.GroupNorm(num_groups, num_channels)
+    else:
+        raise ValueError("[Error] Wrong norm_fn choice!")
+
+
 class MLP(nn.Module):
     def __init__(
         self,
@@ -30,22 +41,24 @@ class MLP(nn.Module):
         output_dim: int = 256,
         last_bn: bool = False,
         num_layers: int = 2,
+        norm: str = "bn",
+        num_groups: int = 0,
     ) -> None:
         super().__init__()
         l1 = nn.Sequential(
             nn.Linear(input_dim, hidden_dim, bias=False),
-            nn.BatchNorm1d(hidden_dim),
+            _select_norm_fn(norm, hidden_dim, num_groups),
             nn.ReLU(inplace=True),
         )
         l2 = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim, bias=False),
-            nn.BatchNorm1d(hidden_dim),
+            _select_norm_fn(norm, hidden_dim, num_groups),
             nn.ReLU(inplace=True),
         )
         if last_bn:
             l3 = nn.Sequential(
                 nn.Linear(hidden_dim, output_dim, bias=True),
-                nn.BatchNorm1d(output_dim),
+                _select_norm_fn(norm, output_dim, num_groups),
             )
         else:
             l3 = nn.Linear(hidden_dim, output_dim, bias=True)
@@ -62,6 +75,33 @@ class MLP(nn.Module):
         return x
 
 
+class LinearTransform(nn.Module):
+    def __init__(
+        self,
+        input_dim: int = 2048,
+        # hidden_dim: int = 4096,
+        output_dim: int = 2048,
+        # last_bn: bool = False,
+        # num_layers: int = 2,
+        last_norm: bool = False,
+        norm: str = "gn",
+        num_groups: int = 0,
+    ):
+        super().__init__()
+        normed_layer = nn.utils.weight_norm(
+            nn.Linear(input_dim, output_dim, bias=False))
+        normed_layer.weight_g.data.fill_(1)
+        normed_layer.weight_g.requires_grad = False
+        layers = [normed_layer]
+        if last_norm:
+            layers.append(_select_norm_fn(norm, output_dim, num_groups))
+        self.linear_trans = nn.Sequential(*layers)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = nn.functional.normalize(x, dim=-1, p=2)
+        return self.linear_trans(x)
+
+
 class SiameseArm(nn.Module):
     def __init__(
         self,
@@ -74,6 +114,10 @@ class SiameseArm(nn.Module):
         num_proj_mlp_layer: int = 2,
         proj_last_bn: bool = False,
         using_predictor: str = True,
+        linear_as_pred: str = False,
+        norm: str = "bn",
+        num_groups: int = 0,
+        pred_last_norm: bool = False,
     ) -> None:
         super().__init__()
 
@@ -92,16 +136,28 @@ class SiameseArm(nn.Module):
             output_dim=out_dim,
             last_bn=proj_last_bn,
             num_layers=num_proj_mlp_layer,
+            norm=norm,
+            num_groups=num_groups,
         )
         if self.using_predictor:
-            # Predictor
-            self.predictor = MLP(
-                input_dim=out_dim,
-                hidden_dim=pred_hidden_dim,
-                output_dim=out_dim,
-                last_bn=False,
-                num_layers=2,
-            )
+            if linear_as_pred:
+                self.predictor = LinearTransform(
+                    input_dim=out_dim,
+                    output_dim=out_dim,
+                    last_norm=pred_last_norm,
+                    norm=norm,
+                    num_groups=num_groups,
+                )
+            else:
+                self.predictor = MLP(
+                    input_dim=out_dim,
+                    hidden_dim=pred_hidden_dim,
+                    output_dim=out_dim,
+                    last_bn=False,
+                    num_layers=2,
+                    norm=norm,
+                    num_groups=num_groups,
+                )
         return
 
     def _single_forward(

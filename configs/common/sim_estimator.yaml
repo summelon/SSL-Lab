@@ -1,0 +1,24 @@
+defaults:
+  - base
+  - _self_
+  - logger: tensorboard
+  - callbacks: null
+  # >>> Take care of special resnet for CIFAR-10
+  - model: resnet18
+  - datamodule: ???
+  # <<<
+  - trainer: fit
+
+basic:
+  # ---- Arch ----
+  name: sim_estimator
+  model_class: arch.modules.sim_estimator.SimEstimatorModel
+
+model:
+  basic:
+    target_temp: 1.0
+    online_temp: 1.0
+
+hydra:
+  searchpath:
+    - pkg://configs/sim_estimator
