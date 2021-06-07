@@ -1,3 +1,3 @@
 defaults:
   - fit_default@_global_
-max_epochs: 800
+max_epochs: 1000

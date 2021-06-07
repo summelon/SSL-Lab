@@ -1,0 +1,18 @@
+# @package _global_
+logger:
+  wandb_logger:
+    _target_: pytorch_lightning.loggers.WandbLogger
+    offline: False
+    project: SSL_Lab
+    # /wandb is append at last by default
+    save_dir: ${basic.cwd}/log
+    group: ${basic.name}_${model.backbone.backbone}
+    name: ${datamodule.basic.name}_${basic.log_postfix}
+    version: ${basic.name}_${model.backbone.backbone}_${datamodule.basic.name}_${basic.log_postfix}
+    id: ${basic.name}_${model.backbone.backbone}_${datamodule.basic.name}_${basic.log_postfix}
+    tags:
+      - ${basic.name}
+      - ${model.backbone.backbone}
+      - ${datamodule.basic.name}
+basic:
+  ckpt_base_dir: ${basic.cwd}/log/wandb_ckpt

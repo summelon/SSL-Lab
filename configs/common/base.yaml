@@ -24,6 +24,7 @@ basic:
   log_postfix: "default"
   warmup_epochs: 10
   ckpt_foramt: ${basic.name}-${model.backbone.backbone}-${datamodule.basic.name}-{epoch:05d}-{step}
+  ckpt_base_dir: ${basic.cwd}/log/${basic.name}
   pretrained: null
   resume: null
 

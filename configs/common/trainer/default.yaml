@@ -5,4 +5,5 @@ sync_batchnorm: ???
 accumulate_grad_batches: ???
 resume_from_checkpoint: ${basic.resume}
 distributed_backend: "ddp"
-default_root_dir: ${basic.cwd}/log/${basic.name}
+default_root_dir: ${basic.ckpt_base_dir}
+precision: 32

@@ -1,7 +1,7 @@
 defaults:
   - base
   - _self_
-  - logger: tensorboard
+  - logger: default
   - callbacks: null
   # >>> Take care of special resnet for CIFAR-10
   - model: resnet18

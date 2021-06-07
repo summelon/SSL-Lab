@@ -30,7 +30,7 @@ def complete_config(
         cfg.trainer.max_epochs * steps_per_epoch
 
     # Update arguments in backbone
-    if cfg.model.mlp.norm == "gn":
+    if cfg.basic.name == "sim_estimator" and cfg.model.mlp.norm == "gn":
         rounded_power = math.ceil(math.log2(cfg.datamodule.basic.num_classes))
         cfg.model.mlp.num_groups = 2 ** rounded_power
 
