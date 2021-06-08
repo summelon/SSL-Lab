@@ -1,12 +1,11 @@
 defaults:
   - default@optimizer
 
-# SGD orig_paper
+# Origin Perper: AdamW
 optimizer:
-  _target_: torch.optim.SGD
-  momentum: 0.9
-  weight_decay: 1e-4
+  _target_: torch.optim.AdamW
+  weight_decay: 0.04
 
 basic:
-  base_lr: 0.05
-  eff_batch_size: 512
+  base_lr: 5e-4
+  eff_batch_size: 1024

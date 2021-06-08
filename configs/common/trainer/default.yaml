@@ -6,4 +6,4 @@ accumulate_grad_batches: ???
 resume_from_checkpoint: ${basic.resume}
 distributed_backend: "ddp"
 default_root_dir: ${basic.ckpt_base_dir}
-precision: 32
+precision: 16

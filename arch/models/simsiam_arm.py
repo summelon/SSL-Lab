@@ -83,22 +83,28 @@ class LinearTransform(nn.Module):
         output_dim: int = 2048,
         # last_bn: bool = False,
         # num_layers: int = 2,
+        dino_last: bool = True,
         last_norm: bool = False,
         norm: str = "gn",
         num_groups: int = 0,
     ):
         super().__init__()
-        normed_layer = nn.utils.weight_norm(
-            nn.Linear(input_dim, output_dim, bias=False))
-        normed_layer.weight_g.data.fill_(1)
-        normed_layer.weight_g.requires_grad = False
-        layers = [normed_layer]
+        self.dino_last = dino_last
+        linear = nn.Linear(input_dim, output_dim, bias=False)
+        if self.dino_last:
+            linear = nn.utils.weight_norm(linear)
+            linear.weight_g.data.fill_(1)
+            linear.weight_g.requires_grad = False
+        layers = [linear]
         if last_norm:
             layers.append(_select_norm_fn(norm, output_dim, num_groups))
         self.linear_trans = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = nn.functional.normalize(x, dim=-1, p=2)
+        if self.dino_last:
+            # dim=0 for Sim Estimator
+            # dim=1 for DINO
+            x = nn.functional.normalize(x, dim=1, p=2)
         return self.linear_trans(x)
 
 
@@ -118,6 +124,7 @@ class SiameseArm(nn.Module):
         norm: str = "bn",
         num_groups: int = 0,
         pred_last_norm: bool = False,
+        dino_last: bool = True,
     ) -> None:
         super().__init__()
 
@@ -147,6 +154,7 @@ class SiameseArm(nn.Module):
                     last_norm=pred_last_norm,
                     norm=norm,
                     num_groups=num_groups,
+                    dino_last=dino_last,
                 )
             else:
                 self.predictor = MLP(

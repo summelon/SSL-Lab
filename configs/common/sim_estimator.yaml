@@ -18,6 +18,7 @@ model:
   basic:
     target_temp: 1.0
     online_temp: 1.0
+    center_momentum: 0.9
 
 hydra:
   searchpath:
