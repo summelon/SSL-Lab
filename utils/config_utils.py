@@ -58,8 +58,12 @@ def complete_config(
             cfg.basic.pretrained, cfg.basic.cwd, accept_none=False)
         print(f"[ INFO ] Using weights from {cfg.model.basic.ckpt_path}")
         # Update log dir if in linear_eval mode
-        cfg.logger.tensorboard_logger.version = \
-            os.path.join(pretrained_version, cfg.basic.stage)
+        for name, logger in cfg.logger.items():
+            if name == "wandb_logger":
+                logger.version = pretrained_version + '_' + cfg.basic.stage
+            else:
+                logger.version = \
+                    os.path.join(pretrained_version, cfg.basic.stage)
 
     return cfg
 
