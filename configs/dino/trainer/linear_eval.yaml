@@ -1,0 +1,3 @@
+defaults:
+  - linear_eval_default@_global_
+max_epochs: 90

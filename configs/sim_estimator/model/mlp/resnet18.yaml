@@ -1,20 +1,20 @@
 # Only proj_hidden_dim is uncertained
 
 # SimSiam
-# proj_hidden_dim: 512
-# pred_hidden_dim: 512
-# out_dim: 2048
+proj_hidden_dim: 512
+pred_hidden_dim: 512
+out_dim: 2048
 
 # BYOL
-proj_hidden_dim: 2048
-pred_hidden_dim: 2048
-out_dim: 256
+# proj_hidden_dim: 2048
+# pred_hidden_dim: 2048
+# out_dim: 256
 
 num_proj_mlp_layer: 2
 # ImageNet Linear Eval: w/ BN: 68.1, w/o BN: 67.4
-proj_last_bn: False
+proj_last_bn: True
 using_predictor: True
 linear_as_pred: True
 norm: gn
 num_groups: 0
-pred_last_norm: False
+pred_last_norm: True
