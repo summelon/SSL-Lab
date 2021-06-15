@@ -30,7 +30,7 @@ class DINOModel(BaseModel):
             target_temp=self.hparams.basic.target_temp,
             online_temp=self.hparams.basic.online_temp,
             center_momentum=self.hparams.basic.center_momentum,
-            out_dim=self.hparams.mlp.out_dim,
+            k_dim=self.hparams.mlp.k_dim,
         )
         self.outputs = None
 
@@ -77,6 +77,7 @@ class DINOModel(BaseModel):
             norm=self.hparams.mlp.norm,
             num_groups=self.hparams.mlp.num_groups,
             pred_last_norm=self.hparams.mlp.pred_last_norm,
+            k_dim=self.hparams.mlp.k_dim,
         )
         return online_network
 
@@ -87,13 +88,13 @@ class FeatureCrossEntropy(torch.nn.Module):
             online_temp,
             target_temp,
             center_momentum,
-            out_dim
+            k_dim,
     ):
         super().__init__()
         self.target_temp = target_temp
         self.online_temp = online_temp
         self.center_momentum = center_momentum
-        self.register_buffer("center", torch.zeros(1, out_dim))
+        self.register_buffer("center", torch.zeros(1, k_dim))
 
     def _asymmetric_loss(self, online_pred, target_pred):
         target_pred = target_pred.detach()

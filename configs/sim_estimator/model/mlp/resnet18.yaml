@@ -15,7 +15,8 @@ num_proj_mlp_layer: 3
 proj_last_bn: False
 using_predictor: True
 linear_as_pred: True
-norm: gn
+norm: bn
 num_groups: 0
 pred_last_norm: False
 dino_last: True
+k_dim: 65536

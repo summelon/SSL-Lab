@@ -8,3 +8,4 @@ linear_as_pred: True
 norm: gn
 num_groups: 0
 pred_last_norm: True
+k_dim: 65536

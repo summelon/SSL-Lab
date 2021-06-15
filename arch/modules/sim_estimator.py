@@ -29,7 +29,7 @@ class SimEstimatorModel(BaseModel):
             target_temp=self.hparams.basic.target_temp,
             online_temp=self.hparams.basic.online_temp,
             center_momentum=self.hparams.basic.center_momentum,
-            out_dim=self.hparams.mlp.out_dim,
+            k_dim=self.hparams.mlp.k_dim,
         )
         self.outputs = None
 
@@ -86,21 +86,25 @@ class FeatureCrossEntropy(torch.nn.Module):
             online_temp,
             target_temp,
             center_momentum,
-            out_dim
+            k_dim,
     ):
         super().__init__()
         self.target_temp = target_temp
         self.online_temp = online_temp
         self.center_momentum = center_momentum
-        self.register_buffer("center", torch.zeros(1, out_dim))
+        self.register_buffer("center", torch.zeros(1, k_dim))
 
     def _asymmetric_loss(self, online_pred, target_pred):
         target_pred = target_pred.detach()
-        online_pred = torch.softmax(online_pred/self.online_temp, dim=0)
-        target_pred = (target_pred - self.center) / self.target_temp
+        online_pred = online_pred / self.online_temp
+        target_pred = torch.softmax(
+            (target_pred - self.center) / self.target_temp,
+            dim=1
+        )
 
         cross_entropy = \
-            -(online_pred * torch.log_softmax(target_pred, dim=0)).sum(dim=0)
+            -(target_pred * torch.log_softmax(online_pred, dim=1)).sum(dim=1)
+
         return cross_entropy.mean()
 
     def forward(self, online_preds, target_preds):

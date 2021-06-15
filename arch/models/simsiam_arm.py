@@ -29,6 +29,8 @@ def _select_norm_fn(choice, num_channels, num_groups=0):
         if num_groups == 0:
             raise ValueError("[Error] num_groups in GN should not be 0!")
         return nn.GroupNorm(num_groups, num_channels)
+    elif choice == "no_norm":
+        return torch.nn.Identity()
     else:
         raise ValueError("[Error] Wrong norm_fn choice!")
 
@@ -80,7 +82,7 @@ class LinearTransform(nn.Module):
         self,
         input_dim: int = 2048,
         # hidden_dim: int = 4096,
-        output_dim: int = 2048,
+        output_dim: int = 65536,
         # last_bn: bool = False,
         # num_layers: int = 2,
         dino_last: bool = True,
@@ -102,8 +104,6 @@ class LinearTransform(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.dino_last:
-            # dim=0 for Sim Estimator
-            # dim=1 for DINO
             x = nn.functional.normalize(x, dim=1, p=2)
         return self.linear_trans(x)
 
@@ -125,6 +125,7 @@ class SiameseArm(nn.Module):
         num_groups: int = 0,
         pred_last_norm: bool = False,
         dino_last: bool = True,
+        k_dim: int = 65536,
     ) -> None:
         super().__init__()
 
@@ -150,7 +151,7 @@ class SiameseArm(nn.Module):
             if linear_as_pred:
                 self.predictor = LinearTransform(
                     input_dim=out_dim,
-                    output_dim=out_dim,
+                    output_dim=k_dim,
                     last_norm=pred_last_norm,
                     norm=norm,
                     num_groups=num_groups,

@@ -19,6 +19,8 @@ model:
     target_temp: 1.0
     online_temp: 1.0
     center_momentum: 0.9
+  mlp:
+    k_dim: 512
 
 hydra:
   searchpath:
