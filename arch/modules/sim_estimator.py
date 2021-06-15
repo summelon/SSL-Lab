@@ -1,5 +1,4 @@
 import torch
-import torch.distributed as dist
 from omegaconf import DictConfig
 from pl_bolts.callbacks.byol_updates import BYOLMAWeightUpdate
 
@@ -25,11 +24,18 @@ class SimEstimatorModel(BaseModel):
             param.requires_grad = False
         self.weight_callback = BYOLMAWeightUpdate()
 
+        # Cross-Entropy term
         self.criterion = FeatureCrossEntropy(
             target_temp=self.hparams.basic.target_temp,
             online_temp=self.hparams.basic.online_temp,
             center_momentum=self.hparams.basic.center_momentum,
-            k_dim=self.hparams.mlp.k_dim,
+        )
+        # Regularization term
+        predictor = self.online_network.predictor.linear_trans
+        online_weight_v = dict(predictor.named_parameters())["0.weight_v"]
+        self.regularization = FeatureIsolation(
+            weight_v=online_weight_v,
+            factor_lambda=self.hparams.basic.factor_lambda,
         )
         self.outputs = None
 
@@ -46,14 +52,16 @@ class SimEstimatorModel(BaseModel):
 
         (_, o0), (_, o1) = self.online_network(x0), self.online_network(x1)
         (_, t0), (_, t1) = self.target_network(x0), self.target_network(x1)
-        loss_tot = self.criterion((o0, o1), (t0, t1))
-        self.outputs = o0
+        loss, collapse = self.criterion((o0, o1), (t0, t1))
+        independent = self.regularization()
+        loss_tot = loss + independent
 
         self.log_dict(
-            {'loss_tot': loss_tot},
+            {"ce": loss, "regularization": independent, "entropy": collapse},
             prog_bar=True, logger=True,
             on_step=True, on_epoch=False, sync_dist=True,
         )
+        self.outputs = o0
         return loss_tot
 
     def on_train_batch_end(self, outputs, batch, batch_idx, dataloader):
@@ -76,59 +84,74 @@ class SimEstimatorModel(BaseModel):
             num_groups=self.hparams.mlp.num_groups,
             pred_last_norm=self.hparams.mlp.pred_last_norm,
             dino_last=self.hparams.mlp.dino_last,
+            k_dim=self.hparams.mlp.k_dim,
         )
         return online_network
 
 
 class FeatureCrossEntropy(torch.nn.Module):
     def __init__(
-            self,
-            online_temp,
-            target_temp,
-            center_momentum,
-            k_dim,
+        self,
+        online_temp,
+        target_temp,
+        center_momentum,
     ):
         super().__init__()
         self.target_temp = target_temp
         self.online_temp = online_temp
         self.center_momentum = center_momentum
-        self.register_buffer("center", torch.zeros(1, k_dim))
 
     def _asymmetric_loss(self, online_pred, target_pred):
         target_pred = target_pred.detach()
         online_pred = online_pred / self.online_temp
-        target_pred = torch.softmax(
-            (target_pred - self.center) / self.target_temp,
-            dim=1
-        )
+        target_pred = torch.softmax(target_pred/self.target_temp, dim=1)
 
         cross_entropy = \
             -(target_pred * torch.log_softmax(online_pred, dim=1)).sum(dim=1)
+        with torch.no_grad():
+            info_entropy = -(target_pred * torch.log(target_pred)).sum(dim=1)
 
-        return cross_entropy.mean()
+        return cross_entropy.mean(), info_entropy.mean()
 
     def forward(self, online_preds, target_preds):
-        loss = 0.5 * (
-            self._asymmetric_loss(online_preds[0], target_preds[1])
-            + self._asymmetric_loss(online_preds[1], target_preds[0])
-        )
-        self.update_center(torch.cat(target_preds))
-        return loss
+        ce1, ie1 = self._asymmetric_loss(online_preds[0], target_preds[1])
+        ce2, ie2 = self._asymmetric_loss(online_preds[1], target_preds[0])
 
-    @torch.no_grad()
-    def update_center(self, teacher_output):
-        """
-        Update center used for teacher output.
-        """
-        # TODO: make sure onely world 0 do the all_reduce
-        batch_center = torch.sum(teacher_output, dim=0, keepdim=True)
-        dist.all_reduce(batch_center)
-        batch_center = \
-            batch_center / (len(teacher_output) * dist.get_world_size())
+        loss = 0.5 * (ce1 + ce2)
+        collapse = 0.5 * (ie1 + ie2)
+        return loss, collapse
 
-        # ema update
-        self.center = (
-            self.center * self.center_momentum
-            + batch_center * (1 - self.center_momentum)
-        )
+
+class FeatureIsolation(torch.nn.Module):
+    def __init__(
+        self,
+        weight_v,
+        factor_lambda,
+    ):
+        super().__init__()
+        self.factor_lambda = factor_lambda
+        self.weight_v = weight_v
+        self.K, self.D = weight_v.shape
+        self.diag_mask = ~torch.eye(self.K, dtype=bool, device=weight_v.device)
         return
+
+    def forward(self):
+        # Unit norm
+        normed_w = self.weight_v / self.weight_v.norm(dim=1, keepdim=True)
+        # Normalization
+        # mean_w = self.weight_v.mean(dim=1, keepdim=True)
+        # std_w = self.weight_v.std(dim=1, keepdim=True)
+        # normed_w = (self.weight_v - mean_w) / std_w
+
+        # Divide D in BarlowTwins paper
+        # similarity = torch.mm(normed_w, normed_w.T) / self.D
+        similarity = torch.mm(normed_w, normed_w.T)
+
+        # Use abs for stable loss
+        loss = similarity[self.diag_mask].abs()
+        # loss = similarity[self.diag_mask].pow(2)
+
+        # Divide 2 since triangle symmetric
+        loss_tot = loss.mean() * self.factor_lambda
+        # loss_tot = loss.sum() * self.factor_lambda
+        return loss_tot

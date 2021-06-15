@@ -1,0 +1,12 @@
+defaults:
+  - default@optimizer
+
+# Cifar SGD
+optimizer:
+  _target_: torch.optim.SGD
+  momentum: 0.9
+  weight_decay: 5e-4
+
+basic:
+  base_lr: 0.03
+  eff_batch_size: 512

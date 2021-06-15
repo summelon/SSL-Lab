@@ -19,4 +19,4 @@ norm: bn
 num_groups: 0
 pred_last_norm: False
 dino_last: True
-k_dim: 65536
+k_dim: 512
