@@ -1,9 +1,10 @@
+import copy
 import torch
 from omegaconf import DictConfig
 from pl_bolts.callbacks.byol_updates import BYOLMAWeightUpdate
 
 from .base import BaseModel
-from ..models.simsiam_arm import SiameseArm
+from ..models.simsiam_arm import SiameseArm, LinearTransform
 
 
 class SimEstimatorModel(BaseModel):
@@ -18,11 +19,17 @@ class SimEstimatorModel(BaseModel):
         super().__init__()
         self.save_hyperparameters()
         self.online_network = self._prepare_model()
-        self.target_network = self._prepare_model()
-        self.target_network.load_state_dict(self.online_network.state_dict())
+        self.target_network = copy.deepcopy(self.online_network)
         for param in self.target_network.parameters():
             param.requires_grad = False
         self.weight_callback = BYOLMAWeightUpdate()
+        self.prototypes = LinearTransform(
+            input_dim=self.hparams.mlp.out_dim,
+            output_dim=self.hparams.mlp.k_dim,
+            last_norm=self.hparams.mlp.pred_last_norm,
+            norm=self.hparams.mlp.norm,
+            dino_last=self.hparams.mlp.dino_last,
+        )
 
         # Cross-Entropy term
         self.criterion = FeatureCrossEntropy(
@@ -31,10 +38,10 @@ class SimEstimatorModel(BaseModel):
             center_momentum=self.hparams.basic.center_momentum,
         )
         # Regularization term
-        predictor = self.online_network.predictor.linear_trans
-        online_weight_v = dict(predictor.named_parameters())["0.weight_v"]
+        prototype_params = self.prototypes.named_parameters()
+        prototype_weight_v = dict(prototype_params)["linear_trans.0.weight_v"]
         self.regularization = FeatureIsolation(
-            weight_v=online_weight_v,
+            weight_v=prototype_weight_v,
             factor_lambda=self.hparams.basic.factor_lambda,
         )
         self.outputs = None
@@ -50,8 +57,14 @@ class SimEstimatorModel(BaseModel):
         # (Aug0, Aug1, w/o aug), label
         (x0, x1, _), _ = batch
 
+        # Online network
         (_, o0), (_, o1) = self.online_network(x0), self.online_network(x1)
-        (_, t0), (_, t1) = self.target_network(x0), self.target_network(x1)
+        o0, o1 = self.prototypes(o0), self.prototypes(o1)
+        # Target network
+        with torch.no_grad():
+            (t0, _), (t1, _) = self.target_network(x0), self.target_network(x1)
+            t0, t1 = self.prototypes(t0), self.prototypes(t1)
+        # Loss
         loss, collapse = self.criterion((o0, o1), (t0, t1))
         independent = self.regularization()
         loss_tot = loss + independent
@@ -87,6 +100,17 @@ class SimEstimatorModel(BaseModel):
             k_dim=self.hparams.mlp.k_dim,
         )
         return online_network
+
+    def _filter_params(self):
+        params = (list(self.online_network.parameters())
+                  + list(self.prototypes.parameters()))
+        # Exclude biases and bn
+        if self.hparams.optimizer == "lars":
+            params = self._exclude_from_wt_decay(
+                params,
+                weight_decay=self.hparams.weight_decay
+            )
+        return params
 
 
 class FeatureCrossEntropy(torch.nn.Module):

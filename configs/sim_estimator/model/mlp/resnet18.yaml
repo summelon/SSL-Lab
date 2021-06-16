@@ -14,7 +14,7 @@ num_proj_mlp_layer: 3
 # ImageNet Linear Eval: w/ BN: 68.1, w/o BN: 67.4
 proj_last_bn: False
 using_predictor: True
-linear_as_pred: True
+linear_as_pred: False
 norm: bn
 num_groups: 0
 pred_last_norm: False
