@@ -32,7 +32,7 @@ class SimEstimatorModel(BaseModel):
         self.weight_callback = BYOLMAWeightUpdate()
 
         # Cross-Entropy term
-        self.criterion = FeatureCrossEntropy()
+        self.criterion = FeatureCrossEntropy(k_dim=self.hparams.mlp.k_dim)
         # Regularization term
         self.regularization = FeatureIsolation(prototype_layer=self.prototypes)
         self.outputs = None
@@ -56,16 +56,17 @@ class SimEstimatorModel(BaseModel):
             (t0, _), (t1, _) = self.target_network(x0), self.target_network(x1)
             t0, t1 = self.prototypes(t0), self.prototypes(t1)
         # Loss
-        loss, t_entropy, o_entropy = self.criterion((o0, o1), (t0, t1))
+        loss, anneal, t_entropy, o_entropy = self.criterion((o0, o1), (t0, t1))
         independence = self.regularization()
-        loss_tot = loss + independence - self.prototypes.scale_s
+        loss_tot = loss + independence + anneal
 
         self.log_dict(
             {"ce": loss,
              "target_entropy": t_entropy,
              "online_entropy": o_entropy,
-             "regularization": independence,
-             "scale_s": self.prototypes.scale_s},
+             "annealing": anneal,
+             "scale_s": self.criterion.scale_s,
+             "regularization": independence},
             prog_bar=True, logger=True,
             on_step=True, on_epoch=False, sync_dist=True,
         )
@@ -100,13 +101,18 @@ class SimEstimatorModel(BaseModel):
 class FeatureCrossEntropy(torch.nn.Module):
     def __init__(
         self,
+        k_dim,
     ):
         super().__init__()
+        from math import ceil, log10
+        self.scale_s = torch.nn.Parameter(torch.ones(1))
+        self.lower_bound = 4 + 2 * ceil(log10(k_dim))
         return
 
     def _asymmetric_loss(self, online_pred, target_pred):
         target_pred = target_pred.detach()
-        target_pred = torch.softmax(target_pred, dim=1)
+        target_pred = torch.softmax(target_pred*self.scale_s, dim=1)
+        online_pred = online_pred * self.scale_s
         online_log_softmax = torch.log_softmax(online_pred, dim=1)
 
         cross_entropy = \
@@ -123,10 +129,11 @@ class FeatureCrossEntropy(torch.nn.Module):
         ce2, te2, oe2 = self._asymmetric_loss(online_preds[1], target_preds[0])
 
         loss = 0.5 * (ce1 + ce2)
+        annealing = 0.5 * (self.lower_bound - self.scale_s).pow(2)
         target_entropy = 0.5 * (te1 + te2)
         online_entropy = 0.5 * (oe1 + oe2)
 
-        return loss, target_entropy, online_entropy
+        return loss, annealing, target_entropy, online_entropy
 
 
 class FeatureIsolation(torch.nn.Module):

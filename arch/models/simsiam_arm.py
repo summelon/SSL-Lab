@@ -91,7 +91,6 @@ class LinearTransform(nn.Module):
         num_groups: int = 0,
     ):
         super().__init__()
-        self.scale_s = torch.nn.Parameter(torch.ones(1))
         self.dino_last = dino_last
         linear = nn.Linear(input_dim, output_dim, bias=False)
         if self.dino_last:
@@ -106,7 +105,7 @@ class LinearTransform(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.dino_last:
             x = nn.functional.normalize(x, dim=1, p=2)
-        return self.linear_trans(x) * self.scale_s
+        return self.linear_trans(x)
 
 
 class SiameseArm(nn.Module):
