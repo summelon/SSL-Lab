@@ -22,7 +22,6 @@ class SimEstimatorModel(BaseModel):
         self.target_network = copy.deepcopy(self.online_network)
         for param in self.target_network.parameters():
             param.requires_grad = False
-        self.weight_callback = BYOLMAWeightUpdate()
         self.prototypes = LinearTransform(
             input_dim=self.hparams.mlp.out_dim,
             output_dim=self.hparams.mlp.k_dim,
@@ -30,20 +29,12 @@ class SimEstimatorModel(BaseModel):
             norm=self.hparams.mlp.norm,
             dino_last=self.hparams.mlp.dino_last,
         )
+        self.weight_callback = BYOLMAWeightUpdate()
 
         # Cross-Entropy term
-        self.criterion = FeatureCrossEntropy(
-            target_temp=self.hparams.basic.target_temp,
-            online_temp=self.hparams.basic.online_temp,
-            center_momentum=self.hparams.basic.center_momentum,
-        )
+        self.criterion = FeatureCrossEntropy()
         # Regularization term
-        prototype_params = self.prototypes.named_parameters()
-        prototype_weight_v = dict(prototype_params)["linear_trans.0.weight_v"]
-        self.regularization = FeatureIsolation(
-            weight_v=prototype_weight_v,
-            factor_lambda=self.hparams.basic.factor_lambda,
-        )
+        self.regularization = FeatureIsolation(prototype_layer=self.prototypes)
         self.outputs = None
 
     def forward(self, x):
@@ -57,20 +48,24 @@ class SimEstimatorModel(BaseModel):
         # (Aug0, Aug1, w/o aug), label
         (x0, x1, _), _ = batch
 
-        # Online network
+        # Online network(using predictor output)
         (_, o0), (_, o1) = self.online_network(x0), self.online_network(x1)
         o0, o1 = self.prototypes(o0), self.prototypes(o1)
-        # Target network
+        # Target network(using projector output)
         with torch.no_grad():
             (t0, _), (t1, _) = self.target_network(x0), self.target_network(x1)
             t0, t1 = self.prototypes(t0), self.prototypes(t1)
         # Loss
-        loss, collapse = self.criterion((o0, o1), (t0, t1))
-        independent = self.regularization()
-        loss_tot = loss + independent
+        loss, t_entropy, o_entropy = self.criterion((o0, o1), (t0, t1))
+        independence = self.regularization()
+        loss_tot = loss + independence - self.prototypes.scale_s
 
         self.log_dict(
-            {"ce": loss, "regularization": independent, "entropy": collapse},
+            {"ce": loss,
+             "target_entropy": t_entropy,
+             "online_entropy": o_entropy,
+             "regularization": independence,
+             "scale_s": self.prototypes.scale_s},
             prog_bar=True, logger=True,
             on_step=True, on_epoch=False, sync_dist=True,
         )
@@ -101,81 +96,53 @@ class SimEstimatorModel(BaseModel):
         )
         return online_network
 
-    def _filter_params(self):
-        params = (list(self.online_network.parameters())
-                  + list(self.prototypes.parameters()))
-        # Exclude biases and bn
-        if self.hparams.optimizer == "lars":
-            params = self._exclude_from_wt_decay(
-                params,
-                weight_decay=self.hparams.weight_decay
-            )
-        return params
-
 
 class FeatureCrossEntropy(torch.nn.Module):
     def __init__(
         self,
-        online_temp,
-        target_temp,
-        center_momentum,
     ):
         super().__init__()
-        self.target_temp = target_temp
-        self.online_temp = online_temp
-        self.center_momentum = center_momentum
+        return
 
     def _asymmetric_loss(self, online_pred, target_pred):
         target_pred = target_pred.detach()
-        online_pred = online_pred / self.online_temp
-        target_pred = torch.softmax(target_pred/self.target_temp, dim=1)
+        target_pred = torch.softmax(target_pred, dim=1)
+        online_log_softmax = torch.log_softmax(online_pred, dim=1)
 
         cross_entropy = \
-            -(target_pred * torch.log_softmax(online_pred, dim=1)).sum(dim=1)
+            -(target_pred * online_log_softmax).sum(dim=1)
         with torch.no_grad():
-            info_entropy = -(target_pred * torch.log(target_pred)).sum(dim=1)
+            t_entropy = -(target_pred * torch.log(target_pred)).sum(dim=1)
+            online_pred = torch.softmax(online_pred, dim=1)
+            o_entropy = -(online_pred * online_log_softmax).sum(dim=1)
 
-        return cross_entropy.mean(), info_entropy.mean()
+        return cross_entropy.mean(), t_entropy.mean(), o_entropy.mean()
 
     def forward(self, online_preds, target_preds):
-        ce1, ie1 = self._asymmetric_loss(online_preds[0], target_preds[1])
-        ce2, ie2 = self._asymmetric_loss(online_preds[1], target_preds[0])
+        ce1, te1, oe1 = self._asymmetric_loss(online_preds[0], target_preds[1])
+        ce2, te2, oe2 = self._asymmetric_loss(online_preds[1], target_preds[0])
 
         loss = 0.5 * (ce1 + ce2)
-        collapse = 0.5 * (ie1 + ie2)
-        return loss, collapse
+        target_entropy = 0.5 * (te1 + te2)
+        online_entropy = 0.5 * (oe1 + oe2)
+
+        return loss, target_entropy, online_entropy
 
 
 class FeatureIsolation(torch.nn.Module):
     def __init__(
         self,
-        weight_v,
-        factor_lambda,
+        prototype_layer,
     ):
         super().__init__()
-        self.factor_lambda = factor_lambda
-        self.weight_v = weight_v
-        self.K, self.D = weight_v.shape
-        self.diag_mask = ~torch.eye(self.K, dtype=bool, device=weight_v.device)
+        prototype_params = prototype_layer.named_parameters()
+        self.weight_v = dict(prototype_params)["linear_trans.0.weight_v"]
         return
 
     def forward(self):
         # Unit norm
         normed_w = self.weight_v / self.weight_v.norm(dim=1, keepdim=True)
-        # Normalization
-        # mean_w = self.weight_v.mean(dim=1, keepdim=True)
-        # std_w = self.weight_v.std(dim=1, keepdim=True)
-        # normed_w = (self.weight_v - mean_w) / std_w
-
-        # Divide D in BarlowTwins paper
-        # similarity = torch.mm(normed_w, normed_w.T) / self.D
         similarity = torch.mm(normed_w, normed_w.T)
-
-        # Use abs for stable loss
-        loss = similarity[self.diag_mask].abs()
-        # loss = similarity[self.diag_mask].pow(2)
-
-        # Divide 2 since triangle symmetric
-        loss_tot = loss.mean() * self.factor_lambda
-        # loss_tot = loss.sum() * self.factor_lambda
-        return loss_tot
+        # Symmetric matrix, use the upper triangle only
+        loss = similarity.triu(diagonal=1).pow(2)
+        return loss.mean()
