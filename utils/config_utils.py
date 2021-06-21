@@ -60,7 +60,10 @@ def complete_config(
         # Update log dir if in linear_eval mode
         for name, logger in cfg.logger.items():
             if name == "wandb_logger":
-                logger.version = pretrained_version + '_' + cfg.basic.stage
+                version_str_list = pretrained_version.split('_')
+                postfix_start = version_str_list.index(data_module.name) + 1
+                postfix = '_'.join(version_str_list[postfix_start:])
+                cfg.basic.log_postfix = postfix + '_' + cfg.basic.stage
             else:
                 logger.version = \
                     os.path.join(pretrained_version, cfg.basic.stage)

@@ -45,10 +45,9 @@ class DINOModel(BaseModel):
         # (Aug0, Aug1, w/o aug), label
         (x0, x1, _), _ = batch
 
-        (_, o0), (_, o1) = self.online_network(x0), self.online_network(x1)
+        (self.outputs, o0), (_, o1) = self.online_network(x0), self.online_network(x1)
         (_, t0), (_, t1) = self.target_network(x0), self.target_network(x1)
         loss_tot = self.criterion((o0, o1), (t0, t1))
-        self.outputs = o0
 
         self.log_dict(
             {'loss_tot': loss_tot},

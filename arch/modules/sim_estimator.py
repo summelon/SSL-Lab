@@ -49,7 +49,7 @@ class SimEstimatorModel(BaseModel):
         (x0, x1, _), _ = batch
 
         # Online network(using predictor output)
-        (_, o0), (_, o1) = self.online_network(x0), self.online_network(x1)
+        (o_log, o0), (_, o1) = self.online_network(x0), self.online_network(x1)
         o0, o1 = self.prototypes(o0), self.prototypes(o1)
         # Target network(using projector output)
         with torch.no_grad():
@@ -70,7 +70,7 @@ class SimEstimatorModel(BaseModel):
             prog_bar=True, logger=True,
             on_step=True, on_epoch=False, sync_dist=True,
         )
-        self.outputs = o0
+        self.outputs = o_log
         return loss_tot
 
     def on_train_batch_end(self, outputs, batch, batch_idx, dataloader):
