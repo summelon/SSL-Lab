@@ -1,0 +1,15 @@
+defaults:
+  - default@optimizer
+
+# Ref: https://colab.research.google.com/github/facebookresearch/moco/blob/colab-notebook/colab/moco_cifar10_demo.ipynb
+optimizer:
+  _target_: torch.optim.SGD
+  momentum: 0.9
+  weight_decay: 5e-4
+
+basic:
+  base_lr: 0.03
+  eff_batch_size: 512
+  bank_size: 4096
+  tau: 0.99
+  temperature: 0.1

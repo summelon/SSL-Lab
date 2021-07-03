@@ -1,0 +1,12 @@
+defaults:
+  - default@optimizer
+
+# Ref: https://github.com/facebookresearch/moco/blob/master/main_moco.py
+optimizer:
+  _target_: torch.optim.SGD
+  momentum: 0.9
+  weight_decay: 1e-4
+
+basic:
+  base_lr: 0.03
+  eff_batch_size: 256

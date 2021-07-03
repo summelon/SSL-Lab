@@ -1,0 +1,4 @@
+defaults:
+  - linear_eval_default@_global_
+# Ref: https://github.com/facebookresearch/moco/blob/master/main_lincls.py
+max_epochs: 100

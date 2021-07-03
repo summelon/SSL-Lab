@@ -1,0 +1,8 @@
+proj_hidden_dim: 2048
+pred_hidden_dim: 0
+out_dim: 128
+num_proj_mlp_layer: 2
+# Ref: https://github.com/facebookresearch/moco/blob/78b69cafae80bc74cd1a89ac3fb365dc20d157d3/moco/builder.py#L31
+norm: no_norm
+proj_last_bn: False
+using_predictor: False

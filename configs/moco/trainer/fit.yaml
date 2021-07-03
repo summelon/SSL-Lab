@@ -1,0 +1,4 @@
+defaults:
+  - fit_default@_global_
+# Ref: https://arxiv.org/pdf/2003.04297.pdf
+max_epochs: 800
