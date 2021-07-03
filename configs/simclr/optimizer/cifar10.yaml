@@ -1,0 +1,14 @@
+defaults:
+  - default@optimizer
+
+optimizer:
+  _target_: pl_bolts.optimizers.lars.LARS
+  momentum: 0.9
+  weight_decay: 1e-6
+
+basic:
+  # 1024 in original paper(LARS, base_lr=[0.5, 1.0, 1.5])
+  # 128 in pl_bolts(LARS, lr=1e-3)
+  # 256 in lightly(SGD, lr=0.1)
+  base_lr: 0.3
+  eff_batch_size: 1024

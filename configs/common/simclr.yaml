@@ -1,0 +1,23 @@
+defaults:
+  - base
+  - _self_
+  - logger: default
+  - callbacks: null
+  # >>> Take care of special resnet for CIFAR-10
+  - model: resnet18
+  - datamodule: ???
+  # <<<
+  - trainer: fit
+
+basic:
+  # ---- Arch ----
+  name: simclr
+  model_class: arch.modules.simclr.SimCLRModel
+
+model:
+  basic:
+    temperature: 0.1
+
+hydra:
+  searchpath:
+    - pkg://configs/simclr
