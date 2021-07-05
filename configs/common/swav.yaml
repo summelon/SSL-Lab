@@ -1,0 +1,40 @@
+defaults:
+  - base
+  - _self_
+  - logger: default
+  - callbacks: null
+  # >>> Take care of special resnet for CIFAR-10
+  - model: resnet18
+  - datamodule: ???
+  # <<<
+  - trainer: fit
+
+basic:
+  # ---- Arch ----
+  name: swav
+  model_class: arch.modules.swav.SwAVModel
+
+model:
+  basic:
+    # Ref: https://github.com/facebookresearch/swav
+    prototype_dim: 3000
+    freeze_prototype_epoch: 1
+      # Queue
+    queue_length: 3840
+    queue_start_epoch: 15
+    device_batch_size: ${basic.device_batch_size}
+      # Sinkhorn
+    sinkhorn_iter: 3
+    sinkhorn_epsilon: 0.05
+      # Multi-crops:
+    num_global_crops: 2
+    num_local_crops: 6
+    temperature: 0.1
+
+datamodule:
+  data_module:
+    drop_last: True
+
+hydra:
+  searchpath:
+    - pkg://configs/swav

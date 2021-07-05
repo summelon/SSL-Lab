@@ -1,0 +1,8 @@
+# Only proj_hidden_dim is uncertained
+proj_hidden_dim: 2048
+pred_hidden_dim: 0
+out_dim: 128
+num_proj_mlp_layer: 2
+# ImageNet Linear Eval: w/ BN: 68.1, w/o BN: 67.4
+proj_last_bn: False
+using_predictor: False

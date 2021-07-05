@@ -1,0 +1,14 @@
+defaults:
+  - default@optimizer
+
+# Ref: https://github.com/PyTorchLightning/Lightning-Bolts/blob/master/pl_bolts/models/self_supervised/swav/swav_module.py
+optimizer:
+  _target_: pl_bolts.optimizers.lars.LARS
+  momentum: 0.9
+  weight_decay: 1e-6
+
+basic:
+  base_lr: 0.6
+  eff_batch_size: 256
+  num_local_crops: 0
+  queue_length: 0
