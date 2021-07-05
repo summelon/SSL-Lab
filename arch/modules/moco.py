@@ -39,13 +39,9 @@ class MOCOModel(BaseModel):
         _, backbone_feature = self.online_network(x, return_features=True)
         return backbone_feature
 
-    def training_step(self, batch, batch_idx):
-        # (x0, x1), _, _ = batch
-        # (Aug0, Aug1, w/o aug), label
-        (x0, x1, _), _ = batch
-
-        # Query features
-        query = self.online_network(x0)
+    def _asymmetric_step(self, q_input: torch.Tensor, k_input: torch.Tensor):
+        query = self.online_network(q_input)
+        self.outputs = query
 
         # Key features
         with torch.no_grad():
@@ -57,14 +53,21 @@ class MOCOModel(BaseModel):
             )
 
             if data_parallel:
-                x1, idx_unshuffle = batch_shuffle_ddp(x1)
-            key = self.target_network(x1)
+                k_input, idx_unshuffle = batch_shuffle_ddp(k_input)
+            key = self.target_network(k_input)
             if data_parallel:
                 key = batch_unshuffle_ddp(key, idx_unshuffle)
 
         loss = self.criterion(query, key)
-        # TODO: modify to more clean method
-        self.outputs = query
+        return loss
+
+    def training_step(self, batch, batch_idx):
+        # (x0, x1), _, _ = batch
+        # (Aug0, Aug1, w/o aug), label
+        (x0, x1, _), _ = batch
+        loss = 0.5 * (
+            self._asymmetric_step(x0, x1) + self._asymmetric_step(x1, x0))
+
         self.log(
             "repr_loss", loss, prog_bar=True, logger=True,
             on_step=True, on_epoch=False, sync_dist=True,
