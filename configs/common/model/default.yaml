@@ -4,6 +4,8 @@ basic:
   num_classes: ${datamodule.basic.num_classes}
   base_lr: ${basic.base_lr}
   eff_batch_size: ${basic.eff_batch_size}
+  num_global_crops: ${transform.train_transforms.num_global_crops}
+  num_local_crops: ${transform.train_transforms.num_local_crops}
 
 scheduler:
   max_steps: ???

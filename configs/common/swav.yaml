@@ -28,8 +28,6 @@ model:
     sinkhorn_iter: 3
     sinkhorn_epsilon: 0.05
       # Multi-crops:
-    num_global_crops: 2
-    num_local_crops: 6
     temperature: 0.1
 
 datamodule:

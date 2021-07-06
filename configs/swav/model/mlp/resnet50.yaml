@@ -1,2 +1,3 @@
 defaults:
   - ResNet18
+proj_hidden_dim: 2048
