@@ -1,0 +1,19 @@
+defaults:
+  - simclr
+
+# Ref: https://github.com/facebookresearch/dino/blob/94175993abde84179449d79e22eab7ea28dec14b/main_dino.py
+# NOTE: Scales in transformer and convnet are different
+train_transforms:
+  # Augmentation options
+  gaussian_blur_prob: 1.0
+  solarize_prob: 0.0
+  jitter_strength: 0.5
+  global_asymmetric_trans: True
+  # Global
+  num_global_crops: 2
+  global_input_size: ${datamodule.basic.input_size}
+  global_scale: [ 0.14, 1.0 ]
+  # Local
+  num_local_crops: 8
+  local_input_size: 96
+  local_scale: [ 0.05, 0.14 ]

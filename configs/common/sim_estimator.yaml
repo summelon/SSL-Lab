@@ -3,6 +3,7 @@ defaults:
   - _self_
   - logger: default
   - callbacks: null
+  - transform: dino
   # >>> Take care of special resnet for CIFAR-10
   - model: resnet18
   - datamodule: ???

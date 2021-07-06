@@ -1,14 +1,4 @@
 # @package _global_
-# defaults:
-#   - _self_
-#   - arch@_global_: ???
-#   - logger: tensorboard
-#   - callbacks: null
-#   # >>> Take care of special resnet for CIFAR-10
-#   - model: resnet18
-#   - datamodule: ???
-#   # <<<
-#   - trainer: fit
 basic:
   cwd: ${hydra:runtime.cwd}
   # ---- Deterministic ----

@@ -1,0 +1,12 @@
+defaults:
+  - simclr
+
+train_transforms:
+  # Global
+  num_global_crops: 2
+  global_input_size: ${datamodule.basic.input_size}
+  global_scale: [ 0.14, 1.0 ]
+  # Local
+  num_local_crops: 6
+  local_input_size: 96
+  local_scale: [ 0.05, 0.14 ]

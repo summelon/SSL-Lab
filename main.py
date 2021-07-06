@@ -55,9 +55,9 @@ def run(cfg: DictConfig) -> int:
 
 def _prepare_data_module(cfg: DictConfig):
     from pytorch_lightning import LightningDataModule
-    from pl_bolts.models.self_supervised.simclr.transforms import (
-        SimCLRTrainDataTransform,
-        SimCLREvalDataTransform,
+    from dataset.ssl_augmentation import (
+        SSLTrainTransform,
+        SSLEvalTransform
     )
 
     cfg.datamodule.data_module.num_workers: int = \
@@ -65,12 +65,12 @@ def _prepare_data_module(cfg: DictConfig):
     data_module: LightningDataModule = \
         hydra.utils.instantiate(cfg.datamodule.data_module)
 
-    data_module.train_transforms: SimCLRTrainDataTransform = \
-        hydra.utils.instantiate(cfg.datamodule.train_transforms)
-    data_module.val_transforms: SimCLREvalDataTransform = \
-        hydra.utils.instantiate(cfg.datamodule.val_transforms)
-    data_module.test_transforms: SimCLREvalDataTransform = \
-        hydra.utils.instantiate(cfg.datamodule.val_transforms)
+    data_module.train_transforms: SSLTrainTransform = \
+        hydra.utils.instantiate(cfg.transform.train_transforms)
+    data_module.val_transforms: SSLEvalTransform = \
+        hydra.utils.instantiate(cfg.transform.val_transforms)
+    data_module.test_transforms: SSLEvalTransform = \
+        hydra.utils.instantiate(cfg.transform.val_transforms)
 
     data_module.setup()
 

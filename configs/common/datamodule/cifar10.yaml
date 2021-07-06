@@ -16,15 +16,25 @@ datamodule:
     pin_memory: True
     val_split: 5000
 
+transform:
   train_transforms:
-    gaussian_blur: False
+    # Augmentation options
+    gaussian_blur_prob: 0.0
+    solarize_prob: 0.0
     jitter_strength: 0.5
+    global_asymmetric_trans: False
+    # Global
+    num_global_crops: 2
+    global_input_size: ${datamodule.basic.input_size}
+    global_scale: [ 0.08, 1.0 ]
+    # Local
+    num_local_crops: 0
+    local_input_size: null
+    local_scale: null
     normalize:
       _target_: pl_bolts.transforms.dataset_normalizations.cifar10_normalization
 
   val_transforms:
-    gaussian_blur: False
-    jitter_strength: 0.5
     normalize:
       _target_: pl_bolts.transforms.dataset_normalizations.cifar10_normalization
 

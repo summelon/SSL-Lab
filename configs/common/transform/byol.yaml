@@ -1,0 +1,9 @@
+defaults:
+  - simclr
+
+train_transforms:
+  # Augmentation options
+  gaussian_blur_prob: 1.0
+  solarize_prob: 0.0
+  jitter_strength: 0.5
+  global_asymmetric_trans: True

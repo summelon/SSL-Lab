@@ -1,0 +1,27 @@
+train_transforms:
+  _target_: dataset.ssl_augmentation.SSLTrainTransform
+  # Augmentation options
+  gaussian_blur_prob: 0.5
+  solarize_prob: 0.0
+  jitter_strength: 1.0
+  global_asymmetric_trans: False
+  # Global
+  num_global_crops: 2
+  global_input_size: ${datamodule.basic.input_size}
+  global_scale: [ 0.08, 1.0 ]
+  # Local
+  num_local_crops: 0
+  local_input_size: null
+  local_scale: null
+  # Normalize func
+  normalize:
+    _target_: torchvision.transform.Normalize
+    mean: [ 0.485, 0.456, 0.406 ]
+    std: [ 0.228, 0.224, 0.225 ]
+
+val_transforms:
+  input_size: ${datamodule.basic.input_size}
+  normalize:
+    _target_: torchvision.transform.Normalize
+    mean: [ 0.485, 0.456, 0.406 ]
+    std: [ 0.228, 0.224, 0.225 ]
