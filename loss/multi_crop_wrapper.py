@@ -26,9 +26,10 @@ class MultiCropLossWrapper(torch.nn.Module):
                 if o_idx == i_idx:
                     continue
                 else:
+                    # Param0: student/online; param1: teacher/target
                     sub_loss += self.loss(
-                        student_pred=student_preds_list[i_idx],
-                        teacher_pred=teacher_preds_list[o_idx],
+                        student_preds_list[i_idx],
+                        teacher_preds_list[o_idx],
                     )
             loss += sub_loss / (self.num_crops - 1)
         loss /= 2
