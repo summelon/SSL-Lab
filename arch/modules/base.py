@@ -106,3 +106,27 @@ class BaseModel(pl.LightningModule):
         msg = network.load_state_dict(match_dict, strict=False)
         print(f"[ INFO ] Missing keys: {msg.missing_keys}")
         return
+
+    def _multi_crop_forward(
+        self,
+        images: list,
+        network: torch.nn.Module,
+        local_forward: bool = False,
+        use_projector_feature: bool = False,
+    ) -> torch.Tensor:
+
+        g_crops = self.hparams.basic.num_global_crops
+        feat_idx = 0 if use_projector_feature else 1
+
+        # Global features
+        # features = (proj_features, pred_features)
+        features = network(torch.cat(images[:g_crops]))
+        # Outputs for collapse checker
+        self.outputs = features[0]
+        features = features[feat_idx]
+
+        # Local features if have local crops
+        if local_forward and self.hparams.basic.num_local_crops > 0:
+            local_features = network(torch.cat(images[g_crops:]))
+            features = torch.cat((features, local_features[feat_idx]))
+        return features

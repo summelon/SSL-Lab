@@ -91,9 +91,8 @@ class LinearTransform(nn.Module):
         num_groups: int = 0,
     ):
         super().__init__()
-        self.dino_last = dino_last
         linear = nn.Linear(input_dim, output_dim, bias=False)
-        if self.dino_last:
+        if dino_last:
             linear = nn.utils.weight_norm(linear)
             linear.weight_g.data.fill_(1)
             linear.weight_g.requires_grad = False
@@ -103,8 +102,7 @@ class LinearTransform(nn.Module):
         self.linear_trans = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if self.dino_last:
-            x = nn.functional.normalize(x, dim=1, p=2)
+        x = nn.functional.normalize(x, dim=1, p=2)
         return self.linear_trans(x)
 
 

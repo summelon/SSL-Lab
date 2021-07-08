@@ -15,13 +15,9 @@ train_transforms:
   local_scale: null
   # Normalize func
   normalize:
-    _target_: torchvision.transforms.Normalize
-    mean: [ 0.485, 0.456, 0.406 ]
-    std: [ 0.228, 0.224, 0.225 ]
+    _target_: pl_bolts.transforms.dataset_normalizations.imagenet_normalization
 
 val_transforms:
   input_size: ${datamodule.basic.input_size}
   normalize:
-    _target_: torchvision.transforms.Normalize
-    mean: [ 0.485, 0.456, 0.406 ]
-    std: [ 0.228, 0.224, 0.225 ]
+    _target_: pl_bolts.transforms.dataset_normalizations.imagenet_normalization

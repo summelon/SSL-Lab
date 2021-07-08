@@ -17,8 +17,8 @@ basic:
 
 model:
   basic:
-    target_temp: 0.04
-    online_temp: 0.1
+    teacher_temp: 0.04
+    student_temp: 0.1
     center_momentum: 0.9
 
 hydra:
