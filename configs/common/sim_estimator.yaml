@@ -15,13 +15,6 @@ basic:
   name: sim_estimator
   model_class: arch.modules.sim_estimator.SimEstimatorModel
 
-model:
-  basic:
-    target_temp: 1.0
-    online_temp: 1.0
-    center_momentum: 0.9
-    factor_lambda: 1.0
-
 hydra:
   searchpath:
     - pkg://configs/sim_estimator

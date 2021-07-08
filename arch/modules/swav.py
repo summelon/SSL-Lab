@@ -87,18 +87,18 @@ class SwAVModel(BaseModel):
         self,
         index: int,
         features: torch.Tensor,
-        online_score: torch.Tensor,
+        online_scores: torch.Tensor,
     ) -> torch.Tensor:
 
         bs = self.hparams.basic.device_batch_size
         # forward if queue is all filled
         if torch.all(self.queue[index, -1, :] != 0):
             queue_scores = self.prototypes(self.queue[index])
-            queue_scores = torch.cat((queue_scores, online_score))
+            online_scores = torch.cat((queue_scores, online_scores))
         # Pop the oldest batch and update
         self.queue[index, bs:] = self.queue[index, :-bs].clone()
         self.queue[index, :bs] = features[bs*index: bs*(index+1)]
-        return queue_scores
+        return online_scores
 
     @torch.no_grad()
     def _get_assignments(self, features: torch.Tensor, scores: torch.Tensor):

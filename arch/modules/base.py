@@ -121,8 +121,9 @@ class BaseModel(pl.LightningModule):
         # Global features
         # features = (proj_features, pred_features)
         features = network(torch.cat(images[:g_crops]))
-        # Outputs for collapse checker
-        self.outputs = features[0]
+        # Outputs for collapse checker(local_forward in online net)
+        if local_forward:
+            self.outputs = features[0]
         features = features[feat_idx]
 
         # Local features if have local crops

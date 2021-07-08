@@ -64,6 +64,7 @@ class SimEstimatorModel(BaseModel):
             local_forward=True,
             use_projector_feature=False,
         )
+        online_feat = self.prototypes(online_feat)
         # Target
         with torch.no_grad():
             target_feat = self._multi_crop_forward(
@@ -73,7 +74,8 @@ class SimEstimatorModel(BaseModel):
                 # Asymmetric forward like BYOL
                 use_projector_feature=True,
             )
-        return self.prototypes(online_feat), self.prototypes(target_feat)
+            target_feat = self.prototypes(target_feat)
+        return online_feat, target_feat
 
     def training_step(self, batch, batch_idx):
         images, labels = batch
