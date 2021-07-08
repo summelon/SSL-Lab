@@ -32,7 +32,6 @@ class DINOModel(BaseModel):
             student_temp=self.hparams.basic.student_temp,
             center_momentum=self.hparams.basic.center_momentum,
         )
-        self.outputs = None
 
     def forward(self, x):
         # Input: x0, x1, return_features

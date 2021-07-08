@@ -7,7 +7,7 @@ class SoftXentLoss(torch.nn.Module):
         self,
         student_temp: float,
         teacher_temp: float = 1.0,
-        teacher_softmax: bool = True
+        teacher_softmax: bool = True,
     ):
         super().__init__()
         self.student_temp = student_temp
@@ -37,7 +37,10 @@ class MultiCropSoftXentLoss(SoftXentLoss):
         # DINO center
         k_dim: int = 65536,
         center_momentum: float = 1.0,
+        # SimEstimator temperature annealing
+        anneal_temp: bool = False,
     ):
+        # Initialize
         super().__init__(
             student_temp=student_temp,
             teacher_temp=teacher_temp,
@@ -47,23 +50,31 @@ class MultiCropSoftXentLoss(SoftXentLoss):
         self.teacher_temp = teacher_temp
         self.student_temp = student_temp
         self.center_momentum = center_momentum
-        # Center will not update when momentum = 1, thus None
-        if self.center_momentum != 1.0:
+        # DINO: Center will not update when momentum = 1, thus None
+        if center_momentum != 1.0:
             self.register_buffer("center", torch.zeros(1, k_dim))
+        # SimEstimator temperature annealing
+        if anneal_temp:
+            from math import ceil, log10
+            self.scale_s = torch.nn.Parameter(torch.ones(1))
+            self.lower_bound = 4 + 2 * ceil(log10(k_dim))
         return
 
     def forward(self, student_preds, teacher_preds):
+        loss = 0.0
         # DINO center
         if hasattr(self, "center"):
             teacher_preds_clone = teacher_preds.clone()
             teacher_preds -= self.center
             self._update_center(teacher_preds_clone)
+        # SimEstimator temperature annealing
+        if hasattr(self, "scale_s"):
+            loss += self._temp_assign_and_anneal()
 
         teacher_preds_list = teacher_preds.chunk(2)
         student_preds_list = student_preds.chunk(self.num_crops)
         self._check_batch_size(student_preds_list, teacher_preds_list)
 
-        loss = 0.0
         # Outer loop: global crops, fixed in 2
         for o_idx in range(2):
             sub_loss = 0.0
@@ -76,8 +87,8 @@ class MultiCropSoftXentLoss(SoftXentLoss):
                         student_pred=student_preds_list[i_idx],
                         teacher_pred=teacher_preds_list[o_idx],
                     )
-            loss += sub_loss / (self.num_crops - 1)
-        loss /= 2
+            # Divided by 2(global crops)
+            loss += 0.5 * (sub_loss / (self.num_crops - 1))
         return loss
 
     def _check_batch_size(self, student_preds: list, teacher_preds: list):
@@ -93,6 +104,11 @@ class MultiCropSoftXentLoss(SoftXentLoss):
                 f", batch size of t_preds[-1]: {teacher_preds[-1].shape[0]}"
             )
         return
+
+    def _temp_assign_and_anneal(self):
+        self.teacher_temp = self.student_temp = 1 / self.scale_s
+        annealing_loss = 0.5 * (self.lower_bound - self.scale_s).pow(2)
+        return annealing_loss
 
     @torch.no_grad()
     def _update_center(self, teacher_output):

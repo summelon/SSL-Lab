@@ -4,6 +4,7 @@ from omegaconf import DictConfig
 from pl_bolts.callbacks.byol_updates import BYOLMAWeightUpdate
 
 from .base import BaseModel
+from loss.soft_xent_loss import MultiCropSoftXentLoss
 from ..models.simsiam_arm import SiameseArm, LinearTransform
 
 
@@ -32,10 +33,16 @@ class SimEstimatorModel(BaseModel):
         self.weight_callback = BYOLMAWeightUpdate()
 
         # Cross-Entropy term
-        self.criterion = FeatureCrossEntropy(k_dim=self.hparams.mlp.k_dim)
+        self.criterion = MultiCropSoftXentLoss(
+            num_crops=basic.num_local_crops+basic.num_global_crops,
+            # Temperature will be assigned by scaling factor during training
+            student_temp=1.0,
+            teacher_temp=1.0,
+            k_dim=self.hparams.mlp.k_dim,
+            anneal_temp=True,
+        )
         # Regularization term
         self.regularization = FeatureIsolation(prototype_layer=self.prototypes)
-        self.outputs = None
 
     def forward(self, x):
         # Input: x0, x1, return_features
@@ -44,33 +51,42 @@ class SimEstimatorModel(BaseModel):
         return backbone_feature
 
     def training_step(self, batch, batch_idx):
-        # (x0, x1), _, _ = batch
-        # (Aug0, Aug1, w/o aug), label
-        (x0, x1, _), _ = batch
+        images, labels = batch
+        # Except the last one(weak augmentation)
+        images = images[:-1]
 
-        # Online network(using predictor output)
-        (o_log, o0), (_, o1) = self.online_network(x0), self.online_network(x1)
-        o0, o1 = self.prototypes(o0), self.prototypes(o1)
-        # Target network(using projector output)
+        # Online
+        online_features = self._multi_crop_forward(
+            images=images,
+            network=self.online_network,
+            local_forward=True,
+            use_projector_feature=False,
+        )
+        online_features = self.prototypes(online_features)
+        # Target
         with torch.no_grad():
-            (t0, _), (t1, _) = self.target_network(x0), self.target_network(x1)
-            t0, t1 = self.prototypes(t0), self.prototypes(t1)
-        # Loss
-        loss, anneal, t_entropy, o_entropy = self.criterion((o0, o1), (t0, t1))
+            target_features = self._multi_crop_forward(
+                images=images,
+                network=self.target_network,
+                local_forward=False,
+                # Asymmetric forward like BYOL
+                use_projector_feature=True,
+            )
+            target_features = self.prototypes(target_features)
+        # Cross-Entropy + annealing loss
+        loss = self.criterion(
+            student_preds=online_features,
+            teacher_preds=target_features,
+        )
         independence = self.regularization()
-        loss_tot = loss + independence + anneal
-
+        loss_tot = loss + independence
         self.log_dict(
             {"ce": loss,
-             "target_entropy": t_entropy,
-             "online_entropy": o_entropy,
-             "annealing": anneal,
              "scale_s": self.criterion.scale_s,
              "regularization": independence},
             prog_bar=True, logger=True,
             on_step=True, on_epoch=False, sync_dist=True,
         )
-        self.outputs = o_log
         return loss_tot
 
     def on_train_batch_end(self, outputs, batch, batch_idx, dataloader):
@@ -98,44 +114,6 @@ class SimEstimatorModel(BaseModel):
         return online_network
 
 
-class FeatureCrossEntropy(torch.nn.Module):
-    def __init__(
-        self,
-        k_dim,
-    ):
-        super().__init__()
-        from math import ceil, log10
-        self.scale_s = torch.nn.Parameter(torch.ones(1))
-        self.lower_bound = 4 + 2 * ceil(log10(k_dim))
-        return
-
-    def _asymmetric_loss(self, online_pred, target_pred):
-        target_pred = target_pred.detach()
-        target_pred = torch.softmax(target_pred*self.scale_s, dim=1)
-        online_pred = online_pred * self.scale_s
-        online_log_softmax = torch.log_softmax(online_pred, dim=1)
-
-        cross_entropy = \
-            -(target_pred * online_log_softmax).sum(dim=1)
-        with torch.no_grad():
-            t_entropy = -(target_pred * torch.log(target_pred)).sum(dim=1)
-            online_pred = torch.softmax(online_pred, dim=1)
-            o_entropy = -(online_pred * online_log_softmax).sum(dim=1)
-
-        return cross_entropy.mean(), t_entropy.mean(), o_entropy.mean()
-
-    def forward(self, online_preds, target_preds):
-        ce1, te1, oe1 = self._asymmetric_loss(online_preds[0], target_preds[1])
-        ce2, te2, oe2 = self._asymmetric_loss(online_preds[1], target_preds[0])
-
-        loss = 0.5 * (ce1 + ce2)
-        annealing = 0.5 * (self.lower_bound - self.scale_s).pow(2)
-        target_entropy = 0.5 * (te1 + te2)
-        online_entropy = 0.5 * (oe1 + oe2)
-
-        return loss, annealing, target_entropy, online_entropy
-
-
 class FeatureIsolation(torch.nn.Module):
     def __init__(
         self,
@@ -147,6 +125,7 @@ class FeatureIsolation(torch.nn.Module):
         return
 
     def forward(self):
+        # TODO: add centering
         # Unit norm
         normed_w = self.weight_v / self.weight_v.norm(dim=1, keepdim=True)
         similarity = torch.mm(normed_w, normed_w.T)
