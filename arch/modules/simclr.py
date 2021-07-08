@@ -33,7 +33,7 @@ class SimCLRModel(BaseModel):
         # (x0, x1), _, _ = batch
         # (Aug0, Aug1, w/o aug), label
         (x0, x1, _), _ = batch
-        y0, y1 = self.online_network(x0, x1)
+        (y0, _), (y1, _) = self.online_network(x0, x1)
         loss = self.criterion(y0, y1)
         # TODO: modify to more clean method
         self.outputs = y0

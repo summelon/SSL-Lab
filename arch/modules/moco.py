@@ -40,7 +40,7 @@ class MOCOModel(BaseModel):
         return backbone_feature
 
     def _asymmetric_step(self, q_input: torch.Tensor, k_input: torch.Tensor):
-        query = self.online_network(q_input)
+        (query, _) = self.online_network(q_input)
         self.outputs = query
 
         # Key features
@@ -54,7 +54,7 @@ class MOCOModel(BaseModel):
 
             if data_parallel:
                 k_input, idx_unshuffle = batch_shuffle_ddp(k_input)
-            key = self.target_network(k_input)
+            (key, _) = self.target_network(k_input)
             if data_parallel:
                 key = batch_unshuffle_ddp(key, idx_unshuffle)
 

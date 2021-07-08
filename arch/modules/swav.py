@@ -3,8 +3,9 @@ from omegaconf import DictConfig
 import torch.distributed as dist
 
 from .base import BaseModel
-from loss.soft_xent_loss import SoftXentLoss
 from ..models.simsiam_arm import SiameseArm
+from loss.soft_xent_loss import SoftXentLoss
+from loss.multi_crop_wrapper import MultiCropLossWrapper
 
 
 class SwAVModel(BaseModel):
@@ -24,19 +25,22 @@ class SwAVModel(BaseModel):
             self.hparams.basic.prototype_dim,
             bias=False,
         )
-        self.criterion = SoftXentLoss(
-            student_temp=self.hparams.basic.temperature,
-            teacher_temp=1.0,
-            teacher_softmax=False,
+
+        self.criterion = MultiCropLossWrapper(
+            num_crops=basic.num_local_crops+basic.num_global_crops,
+            loss_obj=SoftXentLoss(
+                student_temp=self.hparams.basic.temperature,
+                teacher_temp=1.0,
+                teacher_softmax=False,
+            )
         )
-        self.num_crops = basic.num_local_crops + basic.num_global_crops
-        self.outputs = None
 
         self.is_dist = dist.is_available() and dist.is_initialized()
         world_size = dist.get_world_size() if self.is_dist else 1
         if basic.queue_length % (basic.device_batch_size * world_size) != 0:
             raise ValueError("[Error] The length of queue "
                              "should be divisable by batch size!")
+        return
 
     def forward(self, x):
         # Input: x0, x1, return_features
@@ -78,23 +82,6 @@ class SwAVModel(BaseModel):
         self.prototypes.weight.copy_(w)
         return
 
-    def _multi_crop_forward(self, images: list) -> torch.Tensor:
-        # Global features
-        global_features = self.online_network(
-            torch.cat(images[:self.hparams.basic.num_global_crops])
-        )
-        # Local features if have local crops
-        if self.hparams.basic.num_local_crops > 0:
-            local_features = self.online_network(
-                torch.cat(images[self.hparams.basic.num_global_crops:])
-            )
-            whole_features = torch.cat((global_features, local_features))
-        else:
-            whole_features = global_features
-
-        self.outputs = whole_features[:self.hparams.basic.device_batch_size]
-        return torch.nn.functional.normalize(whole_features, dim=1, p=2)
-
     @torch.no_grad()
     def _queue_update_and_forward(
         self,
@@ -107,35 +94,26 @@ class SwAVModel(BaseModel):
         # forward if queue is all filled
         if torch.all(self.queue[index, -1, :] != 0):
             queue_scores = self.prototypes(self.queue[index])
-            online_score = torch.cat((queue_scores, online_score))
+            queue_scores = torch.cat((queue_scores, online_score))
         # Pop the oldest batch and update
         self.queue[index, bs:] = self.queue[index, :-bs].clone()
         self.queue[index, :bs] = features[bs*index: bs*(index+1)]
-        return online_score
+        return queue_scores
 
-    def _cal_total_loss(self, features: torch.Tensor, scores: torch.Tensor):
+    @torch.no_grad()
+    def _get_assignments(self, features: torch.Tensor, scores: torch.Tensor):
         bs = self.hparams.basic.device_batch_size
-        loss = 0.0
-        # Only use global crops to update queue and calculate assignments
-        for idx in range(self.hparams.basic.num_global_crops):
-            assignments = scores[bs*idx: bs*(idx+1)]
+        assignments = list()
+        # Fix global crops to 2 for convenient
+        for idx in range(2):
+            asgmt = scores[bs*idx: bs*(idx+1)].detach()
             # Use queue when its length > 0 and current epochs > start
             if hasattr(self, "queue"):
-                assignments = \
-                    self._queue_update_and_forward(idx, features, assignments)
-            assignments = self._sinkhorn_knopp_algo(assignments, self.is_dist)
+                asgmt = self._queue_update_and_forward(idx, features, asgmt)
+            asgmt = self._sinkhorn_knopp_algo(asgmt, self.is_dist)
             # Use only the online assignments
-            assignments = assignments[-bs:]
-
-            sub_loss = 0.0
-            for v in range(self.num_crops):
-                if v == idx:
-                    continue
-                else:
-                    student_output = scores[bs*v: bs*(v+1)]
-                    sub_loss += self.criterion(student_output, assignments)
-            loss += sub_loss / (self.num_crops - 1)
-        return loss / self.hparams.basic.num_global_crops
+            assignments.append(asgmt[-bs:])
+        return torch.cat(assignments)
 
     def training_step(self, batch, batch_idx):
         # (x0, x1), _, _ = batch
@@ -145,11 +123,25 @@ class SwAVModel(BaseModel):
         images = images[:-1]
 
         self._weight_normalize()
-        features = self._multi_crop_forward(images)
+        features = self._multi_crop_forward(
+            images=images,
+            network=self.online_network,
+            local_forward=True,
+            # Predictor is None
+            use_projector_feature=True,
+        )
+        features = torch.nn.functional.normalize(features, dim=1, p=2)
         scores = self.prototypes(features)
-        # TODO: the last batch is incompatible with the queue(trainer)
-        loss = self._cal_total_loss(features, scores)
+        assignments = self._get_assignments(features.detach(), scores)
 
+        # Scores: (global + local) * batch_size
+        # assignments: global * batch_size
+        loss = self.criterion(
+            student_preds=scores,
+            teacher_preds=assignments,
+        )
+
+        # TODO: the last batch is incompatible with the queue(trainer)
         self.log(
             "repr_loss", loss, prog_bar=True, logger=True,
             on_step=True, on_epoch=False, sync_dist=True,

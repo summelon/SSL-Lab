@@ -178,7 +178,7 @@ class SiameseArm(nn.Module):
             p = self.predictor(z)
             ssl_features = (z, p)
         else:
-            ssl_features = z
+            ssl_features = (z, None)
 
         if return_features:
             out = (ssl_features, f)
