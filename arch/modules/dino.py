@@ -1,10 +1,12 @@
 import torch
 from omegaconf import DictConfig
+import torch.distributed as dist
 from pl_bolts.callbacks.byol_updates import BYOLMAWeightUpdate
 
 from .base import BaseModel
-from loss.soft_xent_loss import MultiCropSoftXentLoss
 from ..models.simsiam_arm import SiameseArm
+from loss.soft_xent_loss import SoftXentLoss
+from loss.multi_crop_wrapper import MultiCropLossWrapper
 
 
 class DINOModel(BaseModel):
@@ -25,13 +27,18 @@ class DINOModel(BaseModel):
             param.requires_grad = False
         self.weight_callback = BYOLMAWeightUpdate()
 
-        self.criterion = MultiCropSoftXentLoss(
+        self.register_buffer("center", torch.zeros(1, self.hparams.mlp.k_dim))
+        self.center_momentum = self.hparams.basic.center_momentum
+
+        self.criterion = MultiCropLossWrapper(
             num_crops=basic.num_local_crops+basic.num_global_crops,
-            k_dim=self.hparams.mlp.k_dim,
-            teacher_temp=self.hparams.basic.teacher_temp,
-            student_temp=self.hparams.basic.student_temp,
-            center_momentum=self.hparams.basic.center_momentum,
+            loss_obj=SoftXentLoss(
+                student_temp=self.hparams.basic.student_temp,
+                teacher_temp=self.hparams.basic.teacher_temp,
+                teacher_softmax=True,
+            )
         )
+        return
 
     def forward(self, x):
         # Input: x0, x1, return_features
@@ -59,8 +66,9 @@ class DINOModel(BaseModel):
             )
         loss_tot = self.criterion(
             student_preds=online_features,
-            teacher_preds=target_features,
+            teacher_preds=target_features-self.center,
         )
+        self._update_center(target_features)
 
         self.log_dict(
             {'loss_tot': loss_tot},
@@ -92,3 +100,20 @@ class DINOModel(BaseModel):
             k_dim=self.hparams.mlp.k_dim,
         )
         return online_network
+
+    @torch.no_grad()
+    def _update_center(self, teacher_output):
+        """
+        For DINO: Update center used for teacher output.
+        """
+        batch_center = torch.sum(teacher_output, dim=0, keepdim=True)
+        dist.all_reduce(batch_center)
+        batch_center = \
+            batch_center / (len(teacher_output) * dist.get_world_size())
+
+        # ema update
+        self.center = (
+            self.center * self.center_momentum
+            + batch_center * (1 - self.center_momentum)
+        )
+        return

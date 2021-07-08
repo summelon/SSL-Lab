@@ -1,11 +1,13 @@
 import copy
 import torch
+from math import ceil, log10
 from omegaconf import DictConfig
 from pl_bolts.callbacks.byol_updates import BYOLMAWeightUpdate
 
 from .base import BaseModel
-from loss.soft_xent_loss import MultiCropSoftXentLoss
 from ..models.simsiam_arm import SiameseArm, LinearTransform
+from loss.soft_xent_loss import SoftXentLoss
+from loss.multi_crop_wrapper import MultiCropLossWrapper
 
 
 class SimEstimatorModel(BaseModel):
@@ -32,14 +34,18 @@ class SimEstimatorModel(BaseModel):
         )
         self.weight_callback = BYOLMAWeightUpdate()
 
+        # Scaling factor for temperature annealing update
+        self.scale_s = torch.nn.Parameter(torch.ones(1))
+        self.lower_bound = 4 + 2 * ceil(log10(self.hparams.mlp.k_dim))
+
         # Cross-Entropy term
-        self.criterion = MultiCropSoftXentLoss(
+        self.criterion = MultiCropLossWrapper(
             num_crops=basic.num_local_crops+basic.num_global_crops,
-            # Temperature will be assigned by scaling factor during training
-            student_temp=1.0,
-            teacher_temp=1.0,
-            k_dim=self.hparams.mlp.k_dim,
-            anneal_temp=True,
+            loss_obj=SoftXentLoss(
+                student_temp=1.0,
+                teacher_temp=1.0,
+                teacher_softmax=True,
+            )
         )
         # Regularization term
         self.regularization = FeatureIsolation(prototype_layer=self.prototypes)
@@ -50,39 +56,46 @@ class SimEstimatorModel(BaseModel):
         _, backbone_feature = self.online_network(x, return_features=True)
         return backbone_feature
 
-    def training_step(self, batch, batch_idx):
-        images, labels = batch
-        # Except the last one(weak augmentation)
-        images = images[:-1]
-
+    def _get_features(self, images):
         # Online
-        online_features = self._multi_crop_forward(
+        online_feat = self._multi_crop_forward(
             images=images,
             network=self.online_network,
             local_forward=True,
             use_projector_feature=False,
         )
-        online_features = self.prototypes(online_features)
         # Target
         with torch.no_grad():
-            target_features = self._multi_crop_forward(
+            target_feat = self._multi_crop_forward(
                 images=images,
                 network=self.target_network,
                 local_forward=False,
                 # Asymmetric forward like BYOL
                 use_projector_feature=True,
             )
-            target_features = self.prototypes(target_features)
-        # Cross-Entropy + annealing loss
-        loss = self.criterion(
+        return self.prototypes(online_feat), self.prototypes(target_feat)
+
+    def training_step(self, batch, batch_idx):
+        images, labels = batch
+        # Except the last one(weak augmentation)
+        images = images[:-1]
+        online_features, target_features = self._get_features(images)
+
+        # reassign scaling factor to temperature
+        self.criterion.loss.student_temp = 1 / self.scale_s
+        self.criterion.loss.teacher_temp = 1 / self.scale_s
+        # Loss
+        ce_loss = self.criterion(
             student_preds=online_features,
             teacher_preds=target_features,
         )
+        annealing_loss = 0.5 * (self.lower_bound - self.scale_s).pow(2)
         independence = self.regularization()
-        loss_tot = loss + independence
+        loss_tot = ce_loss + independence + annealing_loss
+
         self.log_dict(
-            {"ce": loss,
-             "scale_s": self.criterion.scale_s,
+            {"ce": ce_loss,
+             "scale_s": self.scale_s,
              "regularization": independence},
             prog_bar=True, logger=True,
             on_step=True, on_epoch=False, sync_dist=True,
