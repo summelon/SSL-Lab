@@ -19,7 +19,9 @@ class BarlowTwinsModel(SimSiamModel):
         # TODO: Add hyper-parameter `scale-loss` according to GitHub repo
         # Ref: https://github.com/facebookresearch/barlowtwins#barlow-twins-training
 
-        self.criterion = lightly.loss.BarlowTwinsLoss()
+        self.criterion = lightly.loss.BarlowTwinsLoss(
+            lambda_param=self.hparams.basic.lambda_
+        )
 
     def training_step(self, batch, batch_idx):
         # (x0, x1), _, _ = batch

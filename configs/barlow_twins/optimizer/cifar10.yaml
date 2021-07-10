@@ -1,3 +1,28 @@
 defaults:
   - default@optimizer
-  - normal
+
+# LARS: BarlowTwins paper
+optimizer:
+  # _target_: pl_bolts.optimizers.lars.LARS
+  _target_: torch.optim.Adam
+  # momentum: 0.9
+  weight_decay: 1e-6
+
+basic:
+  base_lr: 1e-3
+  # ImageNet Top-1 benchmark from paper figure. 2
+  # 2048: max perf.
+  # 512: less than 0.5% acc drop
+  # 256: 1.0% acc drop
+  eff_batch_size: 128
+
+  # 1 / 128 in HSIC: https://arxiv.org/pdf/2104.13712.pdf
+  lambda_: 0.0078125
+
+mlp:
+  proj_hidden_dim: 512
+  pred_hidden_dim: 0
+  out_dim: 128
+  num_proj_mlp_layer: 2
+  proj_last_bn: False
+  using_predictor: False

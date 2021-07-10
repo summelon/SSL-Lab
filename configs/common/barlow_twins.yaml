@@ -15,6 +15,11 @@ basic:
   name: barlow_twins
   model_class: arch.modules.barlow_twins.BarlowTwinsModel
 
+# Ref: https://github.com/facebookresearch/barlowtwins/blob/main/main.py
+model:
+  basic:
+    lambda_: 0.0051
+
 hydra:
   searchpath:
     - pkg://configs/barlow_twins
