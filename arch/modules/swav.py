@@ -92,7 +92,7 @@ class SwAVModel(BaseModel):
 
         bs = self.hparams.basic.device_batch_size
         # forward if queue is all filled
-        if torch.all(self.queue[index, -1, :] != 0):
+        if not torch.all(self.queue[index, -1, :] == 0):
             queue_scores = self.prototypes(self.queue[index])
             online_scores = torch.cat((queue_scores, online_scores))
         # Pop the oldest batch and update
