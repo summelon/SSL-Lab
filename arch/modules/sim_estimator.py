@@ -38,17 +38,18 @@ class SimEstimatorModel(BaseModel):
         self.scale_s = torch.nn.Parameter(torch.ones(1))
         self.lower_bound = 4 + 2 * ceil(log10(self.hparams.mlp.k_dim))
 
-        # Cross-Entropy term
+        # Cross-Entropy term (student & teacher temp default to 1, use scale_s)
         self.criterion = MultiCropLossWrapper(
             num_crops=basic.num_local_crops+basic.num_global_crops,
             loss_obj=SoftXentLoss(
-                student_temp=1.0,
-                teacher_temp=1.0,
+                student_temp=self.hparams.basic.student_temp,
+                teacher_temp=self.hparams.basic.teacher_temp,
                 teacher_softmax=True,
             )
         )
         # Regularization term
         self.regularization = FeatureIsolation(prototype_layer=self.prototypes)
+        return
 
     def forward(self, x):
         # Input: x0, x1, return_features
@@ -64,7 +65,7 @@ class SimEstimatorModel(BaseModel):
             local_forward=True,
             use_projector_feature=False,
         )
-        online_feat = self.prototypes(online_feat)
+        online_feat = self.prototypes(online_feat) * self.scale_s
         # Target
         with torch.no_grad():
             target_feat = self._multi_crop_forward(
@@ -74,7 +75,7 @@ class SimEstimatorModel(BaseModel):
                 # Asymmetric forward like BYOL
                 use_projector_feature=True,
             )
-            target_feat = self.prototypes(target_feat)
+            target_feat = self.prototypes(target_feat) * self.scale_s
         return online_feat, target_feat
 
     def training_step(self, batch, batch_idx):
@@ -83,9 +84,6 @@ class SimEstimatorModel(BaseModel):
         images = images[:-1]
         online_features, target_features = self._get_features(images)
 
-        # reassign scaling factor to temperature
-        self.criterion.loss.student_temp = 1 / self.scale_s
-        self.criterion.loss.teacher_temp = 1 / self.scale_s
         # Loss
         ce_loss = self.criterion(
             student_preds=online_features,

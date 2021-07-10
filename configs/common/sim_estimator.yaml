@@ -15,6 +15,11 @@ basic:
   name: sim_estimator
   model_class: arch.modules.sim_estimator.SimEstimatorModel
 
+model:
+  basic:
+    student_temp: 1.0
+    teacher_temp: 1.0
+
 hydra:
   searchpath:
     - pkg://configs/sim_estimator
