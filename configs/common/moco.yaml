@@ -17,9 +17,14 @@ basic:
 
 model:
   basic:
-    temperature: 0.07
     bank_size: 65536
-    tau: 0.999
+    # TODO Ablation on tau and temperature
+    # ImageNet setting
+    # tau: 0.999
+    # temperature: 0.07
+    # Cifar setting, good result on food11
+    tau: 0.99
+    temperature: 0.1
 
 hydra:
   searchpath:
