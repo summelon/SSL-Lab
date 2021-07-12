@@ -12,3 +12,7 @@ model:
   basic:
     linear_eval: true
     ckpt_path: ${basic.pretrained}
+
+transform:
+  train_transforms:
+    supervised: True

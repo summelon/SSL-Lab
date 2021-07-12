@@ -59,7 +59,9 @@ class SelfTrainModel(BaseModel):
     def training_step(self, batch, batch_idx):
         # (x0, x1), _, _ = batch
         # (Aug0, Aug1, w/o aug), label
-        (images, _, _), labels = batch
+        images, labels = batch
+        # The first augmentation is the weak one, for supervised learning
+        images = images[0]
         teacher_features = self.teacher(images)[0]
         teacher_logits = self.teacher.fc(teacher_features)
         student_logits = self(images)
@@ -88,8 +90,8 @@ class SelfTrainModel(BaseModel):
         return loss
 
     def test_step(self, batch, batch_idx):
-        (_, _, images), labels = batch
-        logits = self(images)
+        images, labels = batch
+        logits = self(images[0])
         loss = self.classify_criterion(logits, labels)
         self.log(
             "test_test_acc",

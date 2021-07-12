@@ -23,3 +23,6 @@ model:
     student_size: same
   mlp: null
 
+transform:
+  train_transforms:
+    supervised: True

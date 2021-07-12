@@ -18,6 +18,7 @@ train_transforms:
     _target_: pl_bolts.transforms.dataset_normalizations.imagenet_normalization
 
 val_transforms:
+  _target_: dataset.ssl_augmentation.SSLEvalTransform
   input_size: ${datamodule.basic.input_size}
   normalize:
     _target_: pl_bolts.transforms.dataset_normalizations.imagenet_normalization

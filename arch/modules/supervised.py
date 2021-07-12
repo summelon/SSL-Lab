@@ -47,8 +47,9 @@ class SupervisedModel(BaseModel):
     def _share_step(self, stage: str, batch, acc_metric):
         # (x0, x1), _, _ = batch
         # (Aug0, Aug1, w/o aug), label
-        (_, _, imgs), lbls = batch
-        preds = self(imgs)
+        imgs, lbls = batch
+        # The first augmentation is the weak one, for supervised learning
+        preds = self(imgs[0])
         loss = self.criterion(preds, lbls)
         self.log(
             f'supervised_{stage}_acc',

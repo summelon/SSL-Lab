@@ -22,6 +22,8 @@ class SSLTrainTransform(object):
         local_scale: Optional[list] = None,
         # Normalization fn
         normalize=None,
+        # Less augmentation for supervised
+        supervised: bool = False,
     ) -> None:
         """
         crop_scale is (0.08, 1.0) by default in trochvision
@@ -39,6 +41,7 @@ class SSLTrainTransform(object):
         # Global trans are two-way asymmetric
         assert num_global_crops == 2, "[Error] Only support 2 global crops"
 
+        self.supervised = supervised
         self.color_jitter_fn = self._get_color_jitter(jitter_strength)
         self.final_trans = self._get_final_trans(normalize)
         # self.num_global_crops = num_global_crops
@@ -60,16 +63,16 @@ class SSLTrainTransform(object):
         return
 
     def __call__(self, sample):
-        augmentations = list()
-        # Global views
-        for g_trans in self.global_trans:
-            augmentations.append(g_trans(sample))
-        # Local views if local trnas are defined
-        if self.local_trans is not None:
-            for _ in range(self.num_local_crops):
-                augmentations.append(self.local_trans(sample))
-        # Online views for linear eval
-        augmentations.append(self.online_trans(sample))
+        augmentations = [self.online_trans(sample)]
+        if not self.supervised:
+            # Global views
+            for g_trans in self.global_trans:
+                augmentations.append(g_trans(sample))
+            # Local views if local trnas are defined
+            if self.local_trans is not None:
+                for _ in range(self.num_local_crops):
+                    augmentations.append(self.local_trans(sample))
+            # Online views for linear eval
         return augmentations
 
     def _get_global_trans(
@@ -195,7 +198,7 @@ class SSLEvalTransform():
 
     def __call__(self, sample):
         # TODO: for consistency with the code for now, modify in the future
-        return None, None, self.online_transform(sample)
+        return [self.online_transform(sample)]
 
 
 class GaussianBlur(object):
