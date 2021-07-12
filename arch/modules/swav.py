@@ -119,8 +119,8 @@ class SwAVModel(BaseModel):
         # (x0, x1), _, _ = batch
         # (Aug0, Aug1, w/o aug), label
         images, _ = batch
-        # Except the last one(weak augmentation)
-        images = images[:-1]
+        # Except the first one(weak augmentation)
+        images = images[1:]
 
         self._weight_normalize()
         features = self._multi_crop_forward(

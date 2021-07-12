@@ -63,8 +63,8 @@ class MOCOModel(BaseModel):
 
     def training_step(self, batch, batch_idx):
         # (x0, x1), _, _ = batch
-        # (Aug0, Aug1, w/o aug), label
-        (x0, x1, _), _ = batch
+        # (w/o aug, Aug0, Aug1), label
+        (_, x0, x1), _ = batch
         loss = 0.5 * (
             self._asymmetric_step(x0, x1) + self._asymmetric_step(x1, x0))
 

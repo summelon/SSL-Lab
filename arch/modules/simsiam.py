@@ -29,8 +29,8 @@ class SimSiamModel(BaseModel):
 
     def training_step(self, batch, batch_idx):
         # (x0, x1), _, _ = batch
-        # (Aug0, Aug1, w/o aug), label
-        (x0, x1, _), _ = batch
+        # (w/o aug, Aug0, Aug1), label
+        (_, x0, x1), _ = batch
         y0, y1 = self.online_network(x0, x1)
         loss = self.criterion(y0, y1)
         # TODO: modify to more clean method

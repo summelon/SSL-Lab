@@ -80,8 +80,8 @@ class SimEstimatorModel(BaseModel):
 
     def training_step(self, batch, batch_idx):
         images, labels = batch
-        # Except the last one(weak augmentation)
-        images = images[:-1]
+        # Except the first one(weak augmentation)
+        images = images[1:]
         online_features, target_features = self._get_features(images)
 
         # Loss

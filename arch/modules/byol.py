@@ -34,8 +34,8 @@ class BYOLModel(SimSiamModel):
 
     def training_step(self, batch, batch_idx):
         images, labels = batch
-        # Except the last one(weak augmentation)
-        images = images[:-1]
+        # Except the first one(weak augmentation)
+        images = images[1:]
 
         online_features = self._multi_crop_forward(
             images=images,
