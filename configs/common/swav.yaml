@@ -21,7 +21,8 @@ model:
     prototype_dim: 3000
     freeze_prototype_epoch: 1
       # Queue
-    queue_length: 3840
+      # On small dataset, get better results w/o using queue
+    queue_length: 0
     queue_start_epoch: 15
     device_batch_size: ${basic.device_batch_size}
       # Sinkhorn

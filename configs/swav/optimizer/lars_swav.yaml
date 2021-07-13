@@ -1,13 +1,12 @@
 defaults:
   - default@optimizer
 
-# LARS orig_paper
+# Ref: https://github.com/facebookresearch/swav
 optimizer:
   _target_: pl_bolts.optimizers.lars.LARS
   momentum: 0.9
-  weight_decay: 0
-  trust_coefficient: 0.001
+  weight_decay: 1e-6
 
 basic:
-  base_lr: 0.02
-  eff_batch_size: 4096
+  base_lr: 4.8
+  eff_batch_size: 256
