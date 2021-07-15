@@ -18,7 +18,10 @@ basic:
 # Ref: https://github.com/facebookresearch/barlowtwins/blob/main/main.py
 model:
   basic:
-    lambda_: 0.0051
+    # Original paper
+    # lambda_: 0.0051
+    # 1 / 128 in HSIC: https://arxiv.org/pdf/2104.13712.pdf
+    lambda_: 0.0078125
 
 hydra:
   searchpath:

@@ -1,0 +1,20 @@
+defaults:
+  - default@optimizer
+
+# LARS: BarlowTwins paper
+optimizer:
+  _target_: pl_bolts.optimizers.lars.LARS
+  momentum: 0.9
+  weight_decay: 1.5e-6
+
+basic:
+  base_lr: 0.2
+  # ImageNet Top-1 benchmark from paper figure. 2
+  # 2048: max perf.
+  # 512: less than 0.5% acc drop
+  # 256: 1.0% acc drop
+  eff_batch_size: 2048
+
+scheduler:
+  start_lr: 0.0
+  end_lr: 0.002

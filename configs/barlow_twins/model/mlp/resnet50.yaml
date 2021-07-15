@@ -1,3 +1,3 @@
-# In BarlowTwins the setting of MLP in ResNet50 is exactly the same as ResNet18
+# Ref: https://github.com/yaohungt/Barlow-Twins-HSIC/blob/a04f3bdf01bba14fa55772740568dac697e44afc/model.py#L7
 defaults:
   - resnet18
