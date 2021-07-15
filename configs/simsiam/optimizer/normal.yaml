@@ -1,12 +1,12 @@
 defaults:
   - default@optimizer
 
-# SGD orig_paper
+# Adam && bolts default
 optimizer:
-  _target_: torch.optim.SGD
-  momentum: 0.9
-  weight_decay: 1e-4
+  _target_: torch.optim.Adam
+  weight_decay: 1e-6
 
 basic:
-  base_lr: 0.05
-  eff_batch_size: 512
+  base_lr: 1e-3
+  # original: 512
+  eff_batch_size: 256
