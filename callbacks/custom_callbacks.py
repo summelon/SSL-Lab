@@ -46,6 +46,22 @@ class OnlineLinear(pl_bolts.callbacks.SSLOnlineEvaluator):
             z_dim=num_features,
             num_classes=num_classes
         )
+        return
+
+    def to_device(self, batch, device):
+        # get the labeled batch
+        if self.dataset == 'stl10':
+            labeled_batch = batch[1]
+            batch = labeled_batch
+
+        inputs, y = batch
+
+        # first input is for online eval
+        x = inputs[1]
+        x = x.to(device)
+        y = y.to(device)
+
+        return x, y
 
     def on_train_batch_end(
             self, trainer, pl_module, outputs,
