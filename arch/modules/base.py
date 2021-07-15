@@ -95,6 +95,13 @@ class BaseModel(pl.LightningModule):
         return params
 
     def _load_state_dict_to_specific_part(self, network, state_dict):
+        # Clean up weight
+        pretrained_keys = list(state_dict["state_dict"].keys())
+        for k in pretrained_keys:
+            if "conv1.weight" not in k:
+                _ = state_dict["state_dict"].pop(k)
+            else:
+                break
         dict_zip = zip(
             state_dict["state_dict"].items(),
             network.state_dict().items()
