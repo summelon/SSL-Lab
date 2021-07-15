@@ -1,2 +1,2 @@
 defaults:
-  - ResNet18
+  - resnet18
