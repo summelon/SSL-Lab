@@ -1,12 +1,11 @@
 defaults:
   - default@optimizer
 
-# Adam && bolts default
+# Origin Perper: AdamW
 optimizer:
-  _target_: torch.optim.Adam
-  weight_decay: 1e-6
+  _target_: torch.optim.AdamW
+  weight_decay: 0.04
 
 basic:
-  base_lr: 1e-3
-  # original: 512
+  base_lr: 5e-4
   eff_batch_size: 256
