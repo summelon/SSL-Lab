@@ -33,10 +33,7 @@ class SimEstimatorModel(BaseModel):
             dino_last=self.hparams.mlp.dino_last,
         )
         self.weight_callback = BYOLMAWeightUpdate()
-
-        # Scaling factor for temperature annealing update
-        self.scale_s = torch.nn.Parameter(torch.ones(1))
-        self.lower_bound = 4 + 2 * ceil(log10(self.hparams.mlp.k_dim))
+        self.scale_schedule = self._init_scale()
 
         # Cross-Entropy term (student & teacher temp default to 1, use scale_s)
         self.criterion = MultiCropLossWrapper(
@@ -80,23 +77,24 @@ class SimEstimatorModel(BaseModel):
         images, labels = batch
         # Except the first one(weak augmentation)
         images = images[1:]
+
+        scale = self._scale_step()
         online_features, target_features = self._get_features(images)
 
         # Loss
         ce_loss = self.criterion(
-            student_preds=online_features*self.scale_s,
-            teacher_preds=target_features*self.scale_s,
+            student_preds=online_features*scale,
+            teacher_preds=target_features*scale,
         )
-        annealing_loss = 0.5 * (self.lower_bound - self.scale_s).pow(2)
         independence = self.regularization()
-        loss_tot = ce_loss + independence + annealing_loss
+        loss_tot = ce_loss + independence
 
         self.log_dict(
             {"ce": ce_loss,
-             "scale_s": self.scale_s,
+             "scale_s": scale,
              "regularization": independence},
             prog_bar=True, logger=True,
-            on_step=True, on_epoch=False, sync_dist=True,
+            on_step=True, on_epoch=False,
         )
         return loss_tot
 
@@ -123,6 +121,26 @@ class SimEstimatorModel(BaseModel):
             k_dim=self.hparams.mlp.k_dim,
         )
         return online_network
+
+    def _init_scale(self):
+        # Scaling factor for temperature annealing update
+        # self.scale_s = torch.nn.Parameter(torch.ones(1))
+        lower_bound = 4 + 2 * ceil(log10(self.hparams.mlp.k_dim))
+        scale_schedule = torch.arange(
+            start=1.0,
+            end=lower_bound,
+            step=(lower_bound - 1) / self.hparams.basic.scale_max_epoch,
+            device=self.device
+        )
+        return scale_schedule
+
+    def _scale_step(self):
+        if self.trainer.current_epoch >= self.hparams.basic.scale_max_epoch:
+            # Prevent out of index
+            epoch_idx = self.hparams.basic.scale_max_epoch - 1
+        else:
+            epoch_idx = self.trainer.current_epoch
+        return self.scale_schedule[epoch_idx]
 
 
 class FeatureIsolation(torch.nn.Module):

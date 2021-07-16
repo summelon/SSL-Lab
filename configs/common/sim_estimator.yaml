@@ -19,6 +19,7 @@ model:
   basic:
     student_temp: 1.0
     teacher_temp: 1.0
+    scale_max_epoch: 500
 
 hydra:
   searchpath:
