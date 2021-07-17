@@ -53,7 +53,8 @@ def complete_config(
         _check_ckpt(cfg.trainer.resume_from_checkpoint, cfg.basic.cwd)
     if cfg.basic.stage in ["linear_eval", "self_train"]:
         ckpt_path_list = cfg.model.basic.ckpt_path.split("/")
-        pretrained_version = ckpt_path_list[ckpt_path_list.index("log")+3]
+        pretrained_version = \
+            ckpt_path_list[ckpt_path_list.index("checkpoints")-1]
         cfg.model.basic.ckpt_path = _check_ckpt(
             cfg.basic.pretrained, cfg.basic.cwd, accept_none=False)
         print(f"[ INFO ] Using weights from {cfg.model.basic.ckpt_path}")
@@ -61,9 +62,12 @@ def complete_config(
         for name, logger in cfg.logger.items():
             if name == "wandb_logger":
                 version_str_list = pretrained_version.split('_')
-                postfix_start = version_str_list.index(data_module.name) + 1
-                postfix = '_'.join(version_str_list[postfix_start:])
-                cfg.basic.log_postfix = postfix + '_' + cfg.basic.stage
+                dataset_name = cfg.datamodule.basic.name
+                name_start = version_str_list.index(dataset_name)
+                name = '_'.join(version_str_list[name_start:])
+                logger.name = (name
+                               + f"_{cfg.basic.stage}"
+                               + f"_ratio{cfg.datamodule.basic.ratio}")
             else:
                 logger.version = \
                     os.path.join(pretrained_version, cfg.basic.stage)

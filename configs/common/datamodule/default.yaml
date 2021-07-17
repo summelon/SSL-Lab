@@ -5,6 +5,7 @@ basic:
   # TODO modify num_classes input interface in utils
   num_classes: ???
   train_samples: ???
+  ratio: 1.0
 
 data_module:
   batch_size: ${basic.device_batch_size}

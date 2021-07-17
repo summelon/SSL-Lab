@@ -7,5 +7,5 @@ basic:
 
 data_module:
   _target_: dlhelper.dataset.PLDataModule
-  dataset_name: ${datamodule.basic.name}
+  dataset_name: ${datamodule.basic.name}:${datamodule.basic.ratio}
   base_dir: ${datamodule.basic.base_dir}
