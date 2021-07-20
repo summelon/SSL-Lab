@@ -65,7 +65,6 @@ class SimEstimatorModel(BaseModel):
             local_forward=True,
             use_projector_feature=False,
         )
-        online_feat = self.prototypes(online_feat) * self.scale_s
         # Target
         with torch.no_grad():
             target_feat = self._multi_crop_forward(
@@ -75,8 +74,7 @@ class SimEstimatorModel(BaseModel):
                 # Asymmetric forward like BYOL
                 use_projector_feature=True,
             )
-            target_feat = self.prototypes(target_feat) * self.scale_s
-        return online_feat, target_feat
+        return self.prototypes(online_feat), self.prototypes(target_feat)
 
     def training_step(self, batch, batch_idx):
         images, labels = batch
@@ -86,8 +84,8 @@ class SimEstimatorModel(BaseModel):
 
         # Loss
         ce_loss = self.criterion(
-            student_preds=online_features,
-            teacher_preds=target_features,
+            student_preds=online_features*self.scale_s,
+            teacher_preds=target_features*self.scale_s,
         )
         annealing_loss = 0.5 * (self.lower_bound - self.scale_s).pow(2)
         independence = self.regularization()
