@@ -1,3 +1,5 @@
 checkpoint_saver:
   _target_: pytorch_lightning.callbacks.ModelCheckpoint
-  filename: ${basic.ckpt_foramt}
+  monitor: "distil_val_acc"
+  mode: "max"
+  filename: ${basic.ckpt_foramt}-{distil_val_acc:.3f}

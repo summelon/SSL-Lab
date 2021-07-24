@@ -89,16 +89,22 @@ class SelfTrainModel(BaseModel):
         self.log_dict(metrics, prog_bar=True)
         return loss
 
-    def test_step(self, batch, batch_idx):
+    def _eval(self, batch, batch_idx, phase: str):
         images, labels = batch
         logits = self(images[0])
         loss = self.classify_criterion(logits, labels)
         self.log(
-            "test_test_acc",
+            f"distil_{phase}_acc",
             self.test_acc(logits.argmax(dim=1), labels),
             prog_bar=True,
         )
         return loss
+
+    def validation_step(self, batch, batch_idx):
+        return self._eval(batch, batch_idx, phase="val")
+
+    def test_step(self, batch, batch_idx):
+        return self._eval(batch, batch_idx, phase="test")
 
     def _prepare_teacher(self, state_dict):
         backbone_dict = state_dict["hyper_parameters"]["backbone"]
@@ -117,7 +123,7 @@ class SelfTrainModel(BaseModel):
             # Using the same linear head as teacher, remain the fc no change
             student_network = copy.deepcopy(self.teacher)
         else:
-            student_network = getattr(resnets, self.hparams.backbone.backbone)(
+            student_network = getattr(resnets, self.hparams.basic.student_size)(
                 maxpool1=self.hparams.backbone.maxpool1,
                 first_conv=self.hparams.backbone.first_conv,
             )

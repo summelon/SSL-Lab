@@ -7,6 +7,7 @@ defaults:
 basic:
   stage: self_train
   model_class: arch.modules.self_train.SelfTrainModel
+  check_val_every_n_epoch: 10
 
 trainer:
   max_epochs: 400
@@ -21,7 +22,6 @@ model:
     # Large -> small: 1.0
     temperature: 0.1
     student_size: same
-  mlp: null
 
 transform:
   train_transforms:
