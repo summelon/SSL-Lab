@@ -7,9 +7,10 @@ optimizer:
   momentum: 0.9
   weight_decay: 1e-4
   trust_coefficient: 0.001
+  lr: ${model.basic.base_lr} * math.sqrt(${model.basic.eff_batch_size})
 
 basic:
   # In SimCLR-V2: 6.4 = 0.1 * sqrt(eff_bs)
   # eff_lr = base_lr * (eff_bs / 256)
-  base_lr: 0.4
-  eff_batch_size: 4096
+  base_lr: 0.1
+  eff_batch_size: 256
