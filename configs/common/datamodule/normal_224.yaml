@@ -6,6 +6,6 @@ basic:
   input_size: 224
 
 data_module:
-  _target_: dlhelper.dataset.PLDataModule
+  _target_: dataset.data_module.PLDataModule
   dataset_name: ${datamodule.basic.name}:${datamodule.basic.ratio}
   base_dir: ${datamodule.basic.base_dir}

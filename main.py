@@ -54,7 +54,7 @@ def run(cfg: DictConfig) -> int:
 
 
 def _prepare_data_module(cfg: DictConfig):
-    from pytorch_lightning import LightningDataModule
+    from dataset.data_module import PLDataModule
     from dataset.ssl_augmentation import (
         SSLTrainTransform,
         SSLEvalTransform
@@ -62,7 +62,7 @@ def _prepare_data_module(cfg: DictConfig):
 
     cfg.datamodule.data_module.num_workers: int = \
         eval(cfg.datamodule.data_module.num_workers)
-    data_module: LightningDataModule = \
+    data_module: PLDataModule = \
         hydra.utils.instantiate(cfg.datamodule.data_module)
 
     data_module.train_transforms: SSLTrainTransform = \
