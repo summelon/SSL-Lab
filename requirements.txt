@@ -1,6 +1,6 @@
 # ---- Hydra ----
-hydra-core==1.1.0.dev6
-hydra-colorlog==1.1.0.dev1
+hydra-core==1.1.0
+hydra-colorlog==1.1.0
 # ---- Torch ----
 torch==1.6.0
 torchvision==0.7.0

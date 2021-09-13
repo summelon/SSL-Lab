@@ -1,0 +1,21 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+hydra-core = "==1.1.0"
+hydra-colorlog = "==1.1.0"
+torch = "==1.6.0"
+torchvision = "==0.7.0"
+pytorch-lightning = "==1.2.8"
+lightning-bolts = "==0.3.3"
+lightly = "==1.1.6"
+pandas = "==1.2.4"
+scipy = "==1.6.2"
+wandb = "==0.10.33"
+
+[dev-packages]
+
+[requires]
+python_version = "3.7"
