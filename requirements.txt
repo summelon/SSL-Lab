@@ -9,3 +9,7 @@ pytorch-lightning==1.2.8
 # pytorch-lightning==1.1.8
 lightning-bolts==0.3.3
 lightly==1.1.6
+
+pandas==1.2.4
+scipy==1.6.2
+wandb==0.10.33
